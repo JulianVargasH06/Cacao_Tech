@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, delay, map, of, timer } from 'rxjs';
 
 import { API_URL } from '../config/api.config';
+import { USAR_MOCK_API } from '../config/dev.config';
 import { Lote, LoteRequest, TrazabilidadLote } from '../models/lote.model';
 
 @Injectable({ providedIn: 'root' })
@@ -10,8 +11,20 @@ export class LotesService {
     private readonly http = inject(HttpClient);
     private readonly url = `${API_URL}/lotes`;
 
+    private readonly simulados: Lote[] = [
+        {
+            id: 1, codigo: 'L-001', productor: 'Finca La Esperanza', origen: 'Rivera, Huila',
+            fechaRecepcion: '2026-10-10', cantidadRecibida: 500, cantidadDisponible: 420, unidad: 'kg'
+        },
+        {
+            id: 2, codigo: 'L-002', productor: 'Finca El Porvenir', origen: 'Gigante, Huila',
+            fechaRecepcion: '2026-10-12', cantidadRecibida: 300, cantidadDisponible: 300, unidad: 'kg'
+        }
+    ];
+
     /** GET /api/lotes */
     listar(): Observable<Lote[]> {
+        if (USAR_MOCK_API) return of([...this.simulados]).pipe(delay(300));
         return this.http.get<Lote[]>(this.url);
     }
 
@@ -22,6 +35,7 @@ export class LotesService {
 
     /** POST /api/lotes (HU01 · Operador) */
     registrar(datos: LoteRequest): Observable<Lote> {
+        if (USAR_MOCK_API) return this.registrarSimulado(datos);
         return this.http.post<Lote>(this.url, datos);
     }
 
@@ -33,5 +47,22 @@ export class LotesService {
     /** GET /api/lotes/exportar (HU11 · Administrador). Devuelve el CSV como archivo. */
     exportarCsv(): Observable<Blob> {
         return this.http.get(`${this.url}/exportar`, { responseType: 'blob' });
+    }
+
+    private registrarSimulado(datos: LoteRequest): Observable<Lote> {
+        return timer(400).pipe(
+            map(() => {
+                const repetido = this.simulados.some((l) => l.codigo.toLowerCase() === datos.codigo.toLowerCase());
+                if (repetido) {
+                    throw new HttpErrorResponse({
+                        status: 409,
+                        error: { mensaje: `Ya existe un lote con el código ${datos.codigo}` }
+                    });
+                }
+                const lote: Lote = { ...datos, id: this.simulados.length + 1, cantidadDisponible: datos.cantidadRecibida };
+                this.simulados.unshift(lote);
+                return lote;
+            })
+        );
     }
 }
