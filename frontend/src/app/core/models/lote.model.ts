@@ -24,6 +24,7 @@ export interface Lote extends LoteRequest {
 /** Filtros opcionales de GET /api/lotes y GET /api/lotes/exportar (HU11). */
 export interface FiltroLotes {
     codigo?: string; // contiene, sin importar mayúsculas
+    origen?: string; // productor u origen contiene (ej. "Rivera")
     estado?: EstadoLote;
     tipoLote?: TipoLote;
     desde?: string; // yyyy-MM-dd

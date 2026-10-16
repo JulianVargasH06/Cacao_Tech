@@ -52,6 +52,7 @@ type FilaAuditoria = RegistroAuditoria & { cambios: CambioCampo[] };
       <p-card header="Exportar lotes (CSV)">
         <div class="filtros">
           <input pInputText [(ngModel)]="filtroLotes.codigo" placeholder="Código contiene…" aria-label="Código" />
+          <input pInputText [(ngModel)]="filtroLotes.origen" placeholder="Origen o productor…" aria-label="Origen o productor" />
           <p-select [options]="estados" [(ngModel)]="filtroLotes.estado" optionLabel="etiqueta" optionValue="valor"
             placeholder="Todos los estados" [showClear]="true" />
           <p-select [options]="tipos" [(ngModel)]="filtroLotes.tipoLote" optionLabel="etiqueta" optionValue="valor"
@@ -256,6 +257,7 @@ export class Auditoria implements OnInit {
         return {
             ...this.filtroLotes,
             codigo: this.filtroLotes.codigo?.trim() || undefined,
+            origen: this.filtroLotes.origen?.trim() || undefined,
             desde: this.lotesDesde ? aFechaIso(this.lotesDesde) : undefined,
             hasta: this.lotesHasta ? aFechaIso(this.lotesHasta) : undefined
         };

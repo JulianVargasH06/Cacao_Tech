@@ -76,6 +76,11 @@ public class LoteService {
             if (filtro.codigo() != null && !filtro.codigo().isBlank()) {
                 lista.add(cb.like(cb.lower(raiz.get("codigo")), "%" + filtro.codigo().trim().toLowerCase() + "%"));
             }
+            if (filtro.origen() != null && !filtro.origen().isBlank()) {
+                String patron = "%" + filtro.origen().trim().toLowerCase() + "%";
+                lista.add(cb.or(cb.like(cb.lower(raiz.get("productor")), patron),
+                        cb.like(cb.lower(raiz.get("origen")), patron)));
+            }
             if (filtro.estado() != null) lista.add(cb.equal(raiz.get("estado"), filtro.estado()));
             if (filtro.tipoLote() != null) lista.add(cb.equal(raiz.get("tipoLote"), filtro.tipoLote()));
             if (filtro.desde() != null) lista.add(cb.greaterThanOrEqualTo(raiz.get("fechaRegistro"), filtro.desde()));

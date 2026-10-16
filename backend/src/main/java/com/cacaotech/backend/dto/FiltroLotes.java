@@ -10,12 +10,13 @@ import java.time.LocalDate;
  */
 public record FiltroLotes(
         String codigo, // contiene, sin importar mayúsculas
+        String origen, // productor u origen contiene, sin importar mayúsculas (ej. "Rivera")
         Lote.EstadoLote estado,
         Lote.TipoLote tipoLote,
         LocalDate desde, // fechaRegistro desde este día, inclusive
         LocalDate hasta // fechaRegistro hasta este día, inclusive
 ) {
     public static FiltroLotes ninguno() {
-        return new FiltroLotes(null, null, null, null, null);
+        return new FiltroLotes(null, null, null, null, null, null);
     }
 }
