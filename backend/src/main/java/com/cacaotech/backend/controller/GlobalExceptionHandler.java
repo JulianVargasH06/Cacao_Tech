@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -43,6 +44,14 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("error", "El cuerpo de la petición no es válido. Revisa el formato de los datos");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /** El usuario tiene sesión pero su rol no le permite esta operación (@PreAuthorize). */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccesoDenegado(AccessDeniedException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "No tienes permiso para realizar esta operación");
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 
     /** Dos operaciones modificaron el mismo lote a la vez (@Version en Lote): la segunda debe reintentar. */
