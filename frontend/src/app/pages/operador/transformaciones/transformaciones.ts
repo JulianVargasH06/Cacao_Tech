@@ -91,7 +91,7 @@ import { aFechaHoraIso, fechaNoFutura, finDelDia } from '../../../shared/utils/f
             />
             @if (loteSeleccionado(); as lote) {
               <small class="ayuda">
-                Disponible: <strong>{{ lote.cantidadDisponible | number: '1.0-2' }} {{ lote.unidad }}</strong>
+                Disponible: <strong>{{ lote.cantidadDisponible | number: '1.0-2' }} {{ unidad() }}</strong>
                 · {{ lote.productor }}
               </small>
             }
@@ -315,13 +315,13 @@ export class Transformaciones implements OnInit {
     protected readonly guardando = signal(false);
     protected readonly error = signal('');
 
-    /** Solo se puede transformar un lote que todavía tenga cacao. */
+    /** Solo se puede transformar un lote que todavía tenga cacao y que no esté bloqueado. */
     protected readonly opcionesLote = computed(() =>
         this.lotes()
-            .filter((l) => l.cantidadDisponible > 0)
+            .filter((l) => l.cantidadDisponible > 0 && l.estado !== 'BLOQUEADO')
             .map((l) => ({
                 id: l.id,
-                etiqueta: `${l.codigo} · ${l.productor} (${l.cantidadDisponible} ${l.unidad})`
+                etiqueta: `${l.codigo} · ${l.productor} (${l.cantidadDisponible} kg)`
             }))
     );
 
@@ -387,7 +387,7 @@ export class Transformaciones implements OnInit {
     }
 
     protected unidad(): string {
-        return this.loteSeleccionado()?.unidad ?? 'kg';
+        return (this.loteSeleccionado()?.unidad ?? 'KG').toLowerCase(); // el backend manda "KG"
     }
 
     /** Diferencia entre lo que entra y lo que sale. null si aún no se puede calcular. */

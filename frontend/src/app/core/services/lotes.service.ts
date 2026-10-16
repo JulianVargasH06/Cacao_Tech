@@ -4,21 +4,29 @@ import { Observable, delay, map, of, timer } from 'rxjs';
 
 import { API_URL } from '../config/api.config';
 import { USAR_MOCK_API } from '../config/dev.config';
-import { Lote, LoteRequest, TrazabilidadLote } from '../models/lote.model';
+import { Lote, LoteRequest, TipoLote, TrazabilidadLote } from '../models/lote.model';
 
 @Injectable({ providedIn: 'root' })
 export class LotesService {
     private readonly http = inject(HttpClient);
     private readonly url = `${API_URL}/lotes`;
 
+    /** Datos de prueba mientras USAR_MOCK_API = true. Se pierden al recargar la página. */
     private readonly simulados: Lote[] = [
         {
             id: 1, codigo: 'L-001', productor: 'Finca La Esperanza', origen: 'Rivera, Huila',
-            fechaRecepcion: '2026-10-10', cantidadRecibida: 500, cantidadDisponible: 420, unidad: 'kg'
+            fechaRegistro: '2026-10-10', cantidadInicial: 500, cantidadDisponible: 420, unidad: 'KG',
+            tipoLote: 'RECEPCION', estado: 'LIBERADO'
         },
         {
             id: 2, codigo: 'L-002', productor: 'Finca El Porvenir', origen: 'Gigante, Huila',
-            fechaRecepcion: '2026-10-12', cantidadRecibida: 300, cantidadDisponible: 300, unidad: 'kg'
+            fechaRegistro: '2026-10-12', cantidadInicial: 300, cantidadDisponible: 300, unidad: 'KG',
+            tipoLote: 'RECEPCION', estado: 'PENDIENTE'
+        },
+        {
+            id: 3, codigo: 'L-003', productor: 'Finca Santa Rosa', origen: 'Algeciras, Huila',
+            fechaRegistro: '2026-10-13', cantidadInicial: 150, cantidadDisponible: 150, unidad: 'KG',
+            tipoLote: 'RECEPCION', estado: 'BLOQUEADO'
         }
     ];
 
@@ -74,8 +82,15 @@ export class LotesService {
         return this.simulados.some((l) => l.codigo.toLowerCase() === codigo.toLowerCase());
     }
 
-    crearSimulado(datos: LoteRequest): Lote {
-        const lote: Lote = { ...datos, id: this.simulados.length + 1, cantidadDisponible: datos.cantidadRecibida };
+    crearSimulado(datos: LoteRequest, tipoLote: TipoLote = 'RECEPCION'): Lote {
+        const lote: Lote = {
+            ...datos,
+            id: this.simulados.length + 1,
+            cantidadDisponible: datos.cantidadInicial,
+            unidad: 'KG',
+            tipoLote,
+            estado: 'PENDIENTE'
+        };
         this.simulados.unshift(lote);
         return lote;
     }

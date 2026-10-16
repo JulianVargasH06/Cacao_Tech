@@ -4,7 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
 
@@ -15,9 +15,19 @@ import { PageHeader } from '../../../shared/page-header/page-header';
 /** Existencias por lote (HU08): cuánto se recibió, cuánto se ha consumido y cuánto queda. */
 @Component({
     selector: 'app-inventario',
-    imports: [PageHeader, CardModule, TableModule, DecimalPipe,
-        DatePipe, FormsModule, InputTextModule, TagModule, MessageModule
-        , ButtonModule],
+    imports: [
+        PageHeader,
+        CardModule,
+        TableModule,
+        DecimalPipe,
+        DatePipe,
+        LowerCasePipe,
+        FormsModule,
+        InputTextModule,
+        TagModule,
+        MessageModule,
+        ButtonModule
+    ],
     template: `
     <section class="page">
       <app-page-header
@@ -56,8 +66,8 @@ import { PageHeader } from '../../../shared/page-header/page-header';
               <th>Código</th>
               <th>Productor</th>
               <th>Origen</th>
-              <th>Recepción</th>
-              <th class="num">Recibida</th>
+              <th>Registro</th>
+              <th class="num">Inicial</th>
               <th class="num">Consumida</th>
               <th class="num">Disponible</th>
               <th>Estado</th>
@@ -69,11 +79,11 @@ import { PageHeader } from '../../../shared/page-header/page-header';
               <td><strong>{{ lote.codigo }}</strong></td>
               <td>{{ lote.productor }}</td>
               <td>{{ lote.origen }}</td>
-              <td>{{ lote.fechaRecepcion | date: 'dd/MM/yyyy' }}</td>
-              <td class="num">{{ lote.cantidadRecibida | number: '1.0-2' }} {{ lote.unidad }}</td>
-              <td class="num">{{ consumida(lote) | number: '1.0-2' }} {{ lote.unidad }}</td>
+              <td>{{ lote.fechaRegistro | date: 'dd/MM/yyyy' }}</td>
+              <td class="num">{{ lote.cantidadInicial | number: '1.0-2' }} {{ lote.unidad | lowercase }}</td>
+              <td class="num">{{ consumida(lote) | number: '1.0-2' }} {{ lote.unidad | lowercase }}</td>
               <td class="num">
-                <strong>{{ lote.cantidadDisponible | number: '1.0-2' }} {{ lote.unidad }}</strong>
+                <strong>{{ lote.cantidadDisponible | number: '1.0-2' }} {{ lote.unidad | lowercase }}</strong>
               </td>
               <td>
                 @let e = estado(lote);
@@ -173,13 +183,14 @@ export class Inventario implements OnInit {
 
     /** Lo que ya se usó en transformaciones. El backend no lo guarda: se deduce. */
     protected consumida(lote: Lote): number {
-        return lote.cantidadRecibida - lote.cantidadDisponible;
+        return lote.cantidadInicial - lote.cantidadDisponible;
     }
 
-    /** Etiqueta según cuánto queda: avisa antes de que alguien intente consumir de un lote vacío. */
-    protected estado(lote: Lote): { texto: string; severidad: 'success' | 'warn' | 'danger' } {
+    /** Etiqueta según cuánto queda: avisa antes de que alguien intente consumir de un lote vacío o bloqueado. */
+    protected estado(lote: Lote): { texto: string; severidad: 'success' | 'warn' | 'danger' | 'secondary' } {
+        if (lote.estado === 'BLOQUEADO') return { texto: 'Bloqueado', severidad: 'secondary' };
         if (lote.cantidadDisponible <= 0) return { texto: 'Agotado', severidad: 'danger' };
-        if (lote.cantidadDisponible / lote.cantidadRecibida < 0.2) return { texto: 'Bajo', severidad: 'warn' };
+        if (lote.cantidadDisponible / lote.cantidadInicial < 0.2) return { texto: 'Bajo', severidad: 'warn' };
         return { texto: 'Disponible', severidad: 'success' };
     }
 }
