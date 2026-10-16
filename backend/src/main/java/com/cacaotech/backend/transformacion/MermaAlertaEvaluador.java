@@ -24,7 +24,7 @@ public class MermaAlertaEvaluador {
      * Umbral de alerta: merma ESTRICTAMENTE superior al 15 %.
      * Declarado como constante para facilitar futuros ajustes de negocio.
      */
-    private static final BigDecimal UMBRAL = new BigDecimal("15");
+    public static final BigDecimal UMBRAL = new BigDecimal("15"); // público: las alertas lo citan en su descripción
 
     /**
      * Determina si un porcentaje de merma supera el umbral de alerta.

@@ -18,11 +18,15 @@ public record TransformacionResponseDto(
         List<Entrada> entradas,
         List<Salida> salidas,
         BigDecimal mermaKg,
-        BigDecimal mermaPorcentaje
+        BigDecimal mermaPorcentaje,
+        AlertaGenerada alerta // null si la merma no superó el umbral
 ) {
 
     public record Entrada(Long loteId, String codigoLote, BigDecimal cantidadKg) {}
 
     /** loteId es el lote nuevo que se creó con lo que salió del proceso. */
     public record Salida(Long loteId, String codigo, BigDecimal cantidadKg) {}
+
+    /** Alerta de merma alta (HU04): si existe, los lotes resultantes quedaron BLOQUEADOS. */
+    public record AlertaGenerada(Long id, String tipo, String descripcion) {}
 }
