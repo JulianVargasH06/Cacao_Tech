@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -19,13 +20,23 @@ import { AuthService } from '../../core/services/auth.service';
         <p class="subtitulo">Trazabilidad del cacao, del lote al producto</p>
 
         <form [formGroup]="form" (ngSubmit)="entrar()">
-          <label for="usuario">Usuario</label>
-          <input pInputText id="usuario" formControlName="usuario" autocomplete="username" placeholder="Tu usuario" />
+          <label for="correo">Correo</label>
+          <input
+            pInputText
+            id="correo"
+            type="email"
+            formControlName="correo"
+            autocomplete="username"
+            placeholder="tu.correo@cacaotech.com"
+          />
+          @if (form.controls.correo.touched && form.controls.correo.hasError('email')) {
+            <small class="error-campo">Escribe un correo válido</small>
+          }
 
-          <label for="contrasena">Contraseña</label>
+          <label for="password">Contraseña</label>
           <p-password
-            inputId="contrasena"
-            formControlName="contrasena"
+            inputId="password"
+            formControlName="password"
             [feedback]="false"
             [toggleMask]="true"
             [fluid]="true"
@@ -107,6 +118,9 @@ import { AuthService } from '../../core/services/auth.service';
     p-button {
       margin-top: 1rem;
     }
+    .error-campo {
+      color: var(--p-red-500);
+    }
   `
 })
 export class Login {
@@ -117,8 +131,8 @@ export class Login {
     protected readonly error = signal('');
 
     protected readonly form = inject(FormBuilder).nonNullable.group({
-        usuario: ['', Validators.required],
-        contrasena: ['', Validators.required]
+        correo: ['', [Validators.required, Validators.email]],
+        password: ['', Validators.required]
     });
 
     protected entrar(): void {
@@ -126,17 +140,37 @@ export class Login {
         this.cargando.set(true);
         this.error.set('');
 
-        this.auth.login(this.form.getRawValue()).subscribe({
+        const { correo, password } = this.form.getRawValue();
+        this.auth.login({ correo: correo.trim(), password }).subscribe({
             next: (sesion) => {
-                this.router.navigateByUrl(this.auth.rutaInicial(sesion.rol)).catch(() => {
-                    this.error.set('No se pudo abrir tu página de inicio');
-                    this.cargando.set(false);
-                });
+                this.router
+                    .navigateByUrl(this.auth.rutaInicial(sesion.rol))
+                    .then(() => {
+                        // Si la página de inicio no existe aún (ej. /admin/panel del Frontend 2),
+                        // la ruta comodín nos devuelve al login: avisamos en vez de dejar el botón girando.
+                        if (this.router.url.startsWith('/login')) {
+                            this.error.set('Tu página de inicio todavía no está disponible');
+                            this.cargando.set(false);
+                        }
+                    })
+                    .catch(() => {
+                        this.error.set('No se pudo abrir tu página de inicio');
+                        this.cargando.set(false);
+                    });
             },
-            error: () => {
-                this.error.set('Usuario o contraseña incorrectos');
+            error: (err: HttpErrorResponse) => {
+                this.error.set(this.mensajeDeError(err));
                 this.cargando.set(false);
             }
         });
+    }
+
+    /** Traduce la respuesta del backend a un mensaje para el usuario. */
+    private mensajeDeError(err: HttpErrorResponse): string {
+        if (err.status === 401 || err.status === 403) return 'Correo o contraseña incorrectos';
+        if (err.status === 400) return 'Revisa el correo y la contraseña';
+        // 0 = no hubo respuesta; 5xx = falla del servidor (el proxy de ng serve responde 500 si el backend está apagado)
+        if (err.status === 0 || err.status >= 500) return 'El servidor no respondió. ¿Está corriendo el backend?';
+        return 'Ocurrió un error al iniciar sesión. Intenta de nuevo';
     }
 }

@@ -32,13 +32,13 @@ export class AuthService {
         const respuesta$: Observable<LoginResponse> = USAR_MOCK_AUTH
             ? of({
                 token: 'token-de-prueba',
-                rol: datos.usuario.toLowerCase().includes('admin') ? 'ADMINISTRADOR' : 'OPERADOR',
-                nombre: datos.usuario
+                correo: datos.correo,
+                rol: datos.correo.toLowerCase().includes('admin') ? 'ADMINISTRADOR' : 'OPERADOR'
             }).pipe(delay(400))
             : this.http.post<LoginResponse>(`${API_URL}/auth/login`, datos);
 
         return respuesta$.pipe(
-            map((r) => ({ token: r.token, rol: normalizarRol(r.rol), nombre: r.nombre ?? datos.usuario })),
+            map((r) => ({ token: r.token, rol: normalizarRol(r.rol), nombre: r.nombre ?? r.correo })),
             tap((sesion) => this.guardarSesion(sesion))
         );
     }
