@@ -1,0 +1,93 @@
+<div class="landing">
+  <!-- 1. Navbar -->
+  <header class="navbar">
+    <a routerLink="/" class="marca"><i class="pi pi-box"></i> CacaoTech</a>
+    <nav class="navbar-acciones">
+      <a routerLink="/publico/producto" class="enlace-comprador">
+        <i class="pi pi-search"></i><span>Consultar un producto</span>
+      </a>
+      <p-button label="Ingresar al Sistema" icon="pi pi-sign-in" routerLink="/login" />
+    </nav>
+  </header>
+
+  <main>
+    <!-- 2. Hero -->
+    <section class="hero">
+      <div class="hero-texto">
+        <span class="etiqueta">Plataforma para asociaciones cacaoteras</span>
+        <h1>Trazabilidad, Control y Eficiencia en la Cadena del Cacao</h1>
+        <p>
+          Plataforma integral para el monitoreo de lotes, registro de transformaciones y control de mermas en tiempo real.
+        </p>
+        <div class="hero-acciones">
+          <p-button label="Acceder a la Plataforma" icon="pi pi-arrow-right" iconPos="right" size="large" routerLink="/login" />
+          <p-button label="Consultar un producto" icon="pi pi-search" severity="secondary" [outlined]="true" size="large"
+            routerLink="/publico/producto" />
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <svg class="mazorca" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="cascara" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#cfae8a" />
+              <stop offset="55%" stop-color="#a67348" />
+              <stop offset="100%" stop-color="#5f3d2d" />
+            </linearGradient>
+          </defs>
+          <!-- Mazorca de cacao estilizada: cuerpo, surcos y tallo -->
+          <path d="M100 18 C150 28 178 90 172 150 C166 210 132 246 100 248 C68 246 34 210 28 150 C22 90 50 28 100 18 Z"
+            fill="url(#cascara)" />
+          <path d="M100 22 C92 80 92 190 100 244" stroke="#754a31" stroke-width="3" fill="none" opacity="0.55" />
+          <path d="M70 32 C52 90 54 190 76 236" stroke="#754a31" stroke-width="3" fill="none" opacity="0.4" />
+          <path d="M130 32 C148 90 146 190 124 236" stroke="#754a31" stroke-width="3" fill="none" opacity="0.4" />
+          <path d="M100 18 C100 10 104 4 110 2" stroke="#4f3328" stroke-width="5" stroke-linecap="round" fill="none" />
+        </svg>
+        <div class="metrica metrica-1">
+          <strong>100 %</strong>
+          <span>Trazable</span>
+        </div>
+        <div class="metrica metrica-2">
+          <strong><i class="pi pi-chart-line"></i></strong>
+          <span>Control de mermas</span>
+        </div>
+        <div class="metrica metrica-3">
+          <strong><i class="pi pi-shield"></i></strong>
+          <span>Historial auditado</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Funcionalidades -->
+    <section class="seccion">
+      <h2>Funcionalidades principales</h2>
+      <div class="funcionalidades">
+        @for (f of funcionalidades; track f.titulo) {
+          <p-card>
+            <div class="funcionalidad">
+              <span class="icono"><i [class]="f.icono"></i></span>
+              <h3>{{ f.titulo }}</h3>
+              <p>{{ f.descripcion }}</p>
+            </div>
+          </p-card>
+        }
+      </div>
+    </section>
+
+    <!-- 4. Beneficios -->
+    <section class="seccion beneficios">
+      <h2>Beneficios</h2>
+      <ul>
+        @for (b of beneficios; track b) {
+          <li><i class="pi pi-check-circle"></i> {{ b }}</li>
+        }
+      </ul>
+    </section>
+  </main>
+
+  <!-- 5. Footer -->
+  <footer class="footer">
+    <span>© {{ anio }} CacaoTech · Trazabilidad del cacao</span>
+    <span>Versión {{ version }}</span>
+  </footer>
+</div>
