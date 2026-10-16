@@ -3,15 +3,14 @@
 Registro de cómo se usó inteligencia artificial durante la hackathon (15 y 16 de octubre de 2026),
 qué partes del proyecto se hicieron con ella y cómo se validó su trabajo.
 
-## 1. Herramienta
+## 1. Herramientas
 
-| Campo | Detalle |
-|---|---|
-| Herramienta | **Claude Code** (aplicación de escritorio), de Anthropic |
-| Modelo | Claude Opus |
-| Quién la usó | villarreal-dev18 (Frontend 1 / operaciones; luego también backend y Frontend 2) |
-| Acceso al proyecto | Lectura y edición del repositorio local, terminal (compilar, probar, git) y navegador integrado para probar la app |
-| Repositorio | https://github.com/JulianVargasH06/Cacao_Tech |
+| Herramienta | Quién la usó | Para qué | Acceso al proyecto |
+|---|---|---|---|
+| **Claude Code** (Anthropic, modelo Claude Opus), aplicación de escritorio | villarreal-dev18 (Frontend 1 / operaciones; luego también backend y Frontend 2) | Desarrollo guiado y directo, pruebas, diagnóstico y documentación | Lectura y edición del repositorio local, terminal (compilar, probar, git) y navegador integrado para probar la app |
+| **ChatGPT** (OpenAI) | Ana y Julian | Apoyo en sus commits del backend: estructura inicial, entidades, seguridad JWT, recepción de lotes y lógica de merma, costos y margen | Conversación aparte: el código se llevaba al proyecto a mano |
+
+Repositorio: https://github.com/JulianVargasH06/Cacao_Tech
 
 ### Cómo identificar el trabajo hecho con IA
 
@@ -87,22 +86,28 @@ Commits hechos desde Claude Code sin la línea de coautoría (anteriores a la co
 | `26d762f` | 16/10 10:40 | #45 | README con guía de arranque y guion de las pruebas del jurado |
 | — | 16/10 | — | Esta bitácora |
 
-### 3.4 Commits sin registro de IA en estas sesiones
+### 3.4 Commits apoyados con ChatGPT
 
-No aparecen en las sesiones de Claude Code. **Cada integrante debe completar** si usó alguna herramienta de IA.
+Commits de Ana y Julian, hechos con apoyo de **ChatGPT**. No tienen una línea de coautoría; se registran según lo
+informado por el equipo.
+
+| Commit | Fecha | Autor | Descripción | IA |
+|---|---|---|---|---|
+| `d509c72` | 15/10 16:14 | Julian | Estructura inicial del proyecto | ChatGPT |
+| `72050f5` | 15/10 17:21 | Julian | Inicializar frontend con Angular | ChatGPT |
+| `a249786` | 15/10 17:29 | Julian | Inicializar backend Spring Boot | ChatGPT |
+| `3f4cb99` | 15/10 18:21 | Ana | application.properties | ChatGPT |
+| `cd4090c` | 15/10 18:46 | Ana | Creación de lote | ChatGPT |
+| `5ef65d0` | 15/10 22:00 | Julian | Calculadora de merma y pruebas unitarias | ChatGPT |
+| `c10e0d7` | 15/10 22:39 | Julian | Lógica pura de merma, costos y margen | ChatGPT |
+| `aded100` | 16/10 01:06 | Ana | Entidades JPA, repositorio Lote, seguridad base, Swagger | ChatGPT |
+| `0485ae6` | 16/10 02:58 | Ana | Autenticación JWT, seguridad y DataSeeder | ChatGPT |
+| `c966929` | 16/10 03:54 | Ana | Recepción de lotes RF01 | ChatGPT |
+
+### 3.5 Commits sin registro de IA
 
 | Commit | Autor | Descripción | ¿Usó IA? |
 |---|---|---|---|
-| `d509c72` | Julian | Estructura inicial del proyecto | _completar_ |
-| `72050f5` | Julian | Inicializar frontend con Angular | _completar_ |
-| `a249786` | Julian | Inicializar backend Spring Boot | _completar_ |
-| `5ef65d0` | Julian | Calculadora de merma y pruebas unitarias | _completar_ |
-| `c10e0d7` | Julian | Lógica pura de merma, costos y margen | _completar_ |
-| `3f4cb99` | Ana | application.properties | _completar_ |
-| `cd4090c` | Ana | Creación de lote | _completar_ |
-| `aded100` | Ana | Entidades JPA, repositorio Lote, seguridad base, Swagger | _completar_ |
-| `0485ae6` | Ana | Autenticación JWT, seguridad y DataSeeder | _completar_ |
-| `c966929` | Ana | Recepción de lotes RF01 | _completar_ |
 | `d512d63` | villarreal-dev18 | PrimeNG y configuración base (PR #1) | _completar_ |
 
 ## 4. Uso de IA fuera del código
@@ -117,6 +122,8 @@ No aparecen en las sesiones de Claude Code. **Cada integrante debe completar** s
 
 ## 5. Validación humana y controles
 
+- **El código de ChatGPT** lo integraron Ana y Julian a mano en sus ramas; la lógica de merma, costos y margen
+  quedó cubierta por pruebas unitarias (`MermaCalculoTest`, `MermaAlertaTest`, `MargenVentaTest`, `DistribucionCostoTest`).
 - **Ningún cambio llegó a `main` sin revisión humana**: la IA subía ramas; el integrante abría, revisaba y fusionaba cada PR en GitHub.
 - **Compilación y tests** antes de cada commit: `mvnw clean compile` / `test-compile` en el backend y `ng build` en el frontend.
   La suite final tiene **97 tests en verde**, ejecutada por el integrante.
