@@ -8,7 +8,7 @@ qué partes del proyecto se hicieron con ella y cómo se validó su trabajo.
 | Herramienta | Quién la usó | Para qué | Acceso al proyecto |
 |---|---|---|---|
 | **Claude Code** (Anthropic, modelo Claude Opus), aplicación de escritorio | villarreal-dev18 (Frontend 1 / operaciones; luego también backend y Frontend 2) | Desarrollo guiado y directo, pruebas, diagnóstico y documentación | Lectura y edición del repositorio local, terminal (compilar, probar, git) y navegador integrado para probar la app |
-| **Antigravity** (Google), modelo **Gemini Flash** | Julian y Ana | Estructura inicial del proyecto, inicialización de Angular y Spring Boot, lógica y pruebas de merma, costos y margen, entidades JPA, seguridad JWT y recepción de lotes | Editor con agente: trabaja sobre los archivos del proyecto |
+| **Antigravity** (Google), modelo **Gemini Flash** | Julian, Ana y villarreal-dev18 | Estructura inicial del proyecto, inicialización de Angular y Spring Boot, configuración de PrimeNG, lógica y pruebas de merma, costos y margen, entidades JPA, seguridad JWT y recepción de lotes | Editor con agente: trabaja sobre los archivos del proyecto |
 | **ChatGPT** (OpenAI) | Ana | Configuración de `application.properties` | Conversación aparte: el resultado se llevó al proyecto a mano |
 
 Repositorio: https://github.com/JulianVargasH06/Cacao_Tech
@@ -87,7 +87,7 @@ Commits hechos desde Claude Code sin la línea de coautoría (anteriores a la co
 | `26d762f` | 16/10 10:40 | #45 | README con guía de arranque y guion de las pruebas del jurado |
 | — | 16/10 | — | Esta bitácora |
 
-### 3.4 Commits de Ana y Julian (Antigravity y ChatGPT)
+### 3.4 Commits con Antigravity y ChatGPT
 
 Estos commits no tienen una línea de coautoría; la herramienta de cada uno se registra según lo informado por el equipo.
 
@@ -97,6 +97,7 @@ Estos commits no tienen una línea de coautoría; la herramienta de cada uno se 
 | `72050f5` | 15/10 17:21 | Julian | Inicializar frontend con Angular | Antigravity · Gemini Flash |
 | `a249786` | 15/10 17:29 | Julian | Inicializar backend Spring Boot | Antigravity · Gemini Flash |
 | `3f4cb99` | 15/10 18:21 | Ana | application.properties | **ChatGPT** |
+| `d512d63` | 15/10 18:25 | villarreal-dev18 | PrimeNG y configuración base (PR #1) | Antigravity · Gemini Flash |
 | `cd4090c` | 15/10 18:46 | Ana | Creación de lote | Antigravity · Gemini Flash |
 | `5ef65d0` | 15/10 22:00 | Julian | Calculadora de merma y pruebas unitarias | Antigravity · Gemini Flash |
 | `c10e0d7` | 15/10 22:39 | Julian | Lógica pura de merma, costos y margen | Antigravity · Gemini Flash |
@@ -104,13 +105,8 @@ Estos commits no tienen una línea de coautoría; la herramienta de cada uno se 
 | `0485ae6` | 16/10 02:58 | Ana | Autenticación JWT, seguridad y DataSeeder | Antigravity · Gemini Flash |
 | `c966929` | 16/10 03:54 | Ana | Recepción de lotes RF01 | Antigravity · Gemini Flash |
 
-Resumen: **9 commits con Antigravity** (Julian 5, Ana 4) y **1 con ChatGPT** (Ana).
-
-### 3.5 Commits sin registro de IA
-
-| Commit | Autor | Descripción | ¿Usó IA? |
-|---|---|---|---|
-| `d512d63` | villarreal-dev18 | PrimeNG y configuración base (PR #1) | _completar_ |
+Resumen: **10 commits con Antigravity** (Julian 5, Ana 4, villarreal-dev18 1) y **1 con ChatGPT** (Ana).
+Con esto, todos los commits del proyecto (sin contar los de merge de los PR) quedan registrados con su herramienta de IA.
 
 ## 4. Uso de IA fuera del código
 
@@ -124,7 +120,7 @@ Resumen: **9 commits con Antigravity** (Julian 5, Ana 4) y **1 con ChatGPT** (An
 
 ## 5. Validación humana y controles
 
-- **El trabajo de Antigravity y ChatGPT** lo revisaron e integraron Ana y Julian en sus ramas; la lógica de merma,
+- **El trabajo de Antigravity y ChatGPT** lo revisó e integró cada integrante en sus ramas; la lógica de merma,
   costos y margen quedó cubierta por pruebas unitarias (`MermaCalculoTest`, `MermaAlertaTest`, `MargenVentaTest`, `DistribucionCostoTest`).
 - **Ningún cambio llegó a `main` sin revisión humana**: la IA subía ramas; el integrante abría, revisaba y fusionaba cada PR en GitHub.
 - **Compilación y tests** antes de cada commit: `mvnw clean compile` / `test-compile` en el backend y `ng build` en el frontend.
