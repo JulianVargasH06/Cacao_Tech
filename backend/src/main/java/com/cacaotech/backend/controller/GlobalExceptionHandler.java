@@ -2,6 +2,8 @@ package com.cacaotech.backend.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,5 +35,21 @@ public class GlobalExceptionHandler {
         Map<String, Object> response = new HashMap<>();
         response.put("error", ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /** JSON mal formado o con tipos inválidos (ej. una fecha que no es yyyy-MM-ddTHH:mm:ss). */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleMensajeIlegible(HttpMessageNotReadableException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "El cuerpo de la petición no es válido. Revisa el formato de los datos");
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /** Dos operaciones modificaron el mismo lote a la vez (@Version en Lote): la segunda debe reintentar. */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleConcurrencia(ObjectOptimisticLockingFailureException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "El lote fue modificado por otra operación al mismo tiempo. Intenta de nuevo");
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 }
