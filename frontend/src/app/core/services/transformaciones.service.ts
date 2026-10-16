@@ -36,10 +36,14 @@ export class TransformacionesService {
         return this.http.get<Transformacion[]>(this.url);
     }
 
-    /** POST /api/transformaciones (HU02 · Operador) */
-    registrar(datos: TransformacionRequest): Observable<Transformacion> {
+    /**
+     * POST /api/transformaciones (HU02 · Operador). La clave de idempotencia identifica la operación:
+     * si se reenvía con la misma clave, el backend devuelve la ya registrada sin consumir de nuevo.
+     */
+    registrar(datos: TransformacionRequest, claveIdempotencia?: string): Observable<Transformacion> {
         if (USAR_MOCK_API) return this.registrarSimulado(datos);
-        return this.http.post<Transformacion>(this.url, datos);
+        const headers: Record<string, string> = claveIdempotencia ? { 'Idempotency-Key': claveIdempotencia } : {};
+        return this.http.post<Transformacion>(this.url, datos, { headers });
     }
 
     /** GET /api/transformaciones/{id}/costos (HU05 · Administrador) */

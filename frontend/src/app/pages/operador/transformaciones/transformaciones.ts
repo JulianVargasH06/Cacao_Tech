@@ -314,6 +314,12 @@ export class Transformaciones implements OnInit {
     protected readonly lotes = signal<Lote[]>([]);
     protected readonly cargando = signal(true);
     protected readonly guardando = signal(false);
+    /**
+     * Identifica la operación que se está registrando. Se conserva si el envío falla (p. ej. se cae la red
+     * sin saber si llegó): al reintentar, el backend reconoce la clave y no consume los lotes dos veces.
+     * Solo cambia cuando la transformación se registra con éxito.
+     */
+    private claveOperacion = crypto.randomUUID();
     protected readonly error = signal('');
 
     /** Solo se puede transformar un lote que todavía tenga cacao y que no esté bloqueado. */
@@ -428,9 +434,10 @@ export class Transformaciones implements OnInit {
         const unidad = this.unidad();
 
         this.guardando.set(true);
-        this.transformaciones.registrar(datos).subscribe({
+        this.transformaciones.registrar(datos, this.claveOperacion).subscribe({
             next: (t) => {
                 this.guardando.set(false);
+                this.claveOperacion = crypto.randomUUID();
                 this.mensajes.add({
                     severity: 'success',
                     summary: `Transformación ${t.codigo} registrada`,
