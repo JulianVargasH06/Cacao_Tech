@@ -9,6 +9,14 @@
   min-height: 100vh;
 }
 
+/* Las secciones (hero, funcionalidades, beneficios) están dentro de <main>: el gap de .landing
+   no las separa entre sí, así que <main> necesita su propio espaciado */
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+}
+
 /* Paneles de cristal */
 .navbar,
 .hero-visual .metrica,
@@ -238,7 +246,8 @@ h3 {
 }
 
 @media (max-width: 560px) {
-  .landing {
+  .landing,
+  main {
     gap: 2rem;
   }
   /* En celular el enlace del comprador queda solo con el ícono */
