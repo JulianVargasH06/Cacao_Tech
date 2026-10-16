@@ -1,15 +1,16 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 /** Estructura para páginas públicas (sin login), como la ficha comercial del producto (HU06). */
 @Component({
     selector: 'app-public-layout',
-    imports: [RouterOutlet],
+    imports: [RouterOutlet, RouterLink],
     template: `
     <div class="envoltura">
       <header class="header">
         <span class="brand"><i class="pi pi-box"></i> CacaoTech</span>
         <span class="lema">Trazabilidad del cacao, de la finca a tus manos</span>
+        <a routerLink="/login" class="acceso"><i class="pi pi-lock"></i> Acceso para la asociación</a>
       </header>
       <main class="contenido">
         <router-outlet />
@@ -51,6 +52,19 @@ import { RouterOutlet } from '@angular/router';
     .lema {
       color: var(--p-text-muted-color);
       font-size: 0.875rem;
+      margin-right: auto;
+    }
+    /* Discreto: la página es para compradores; el enlace es para el equipo de la asociación */
+    .acceso {
+      font-size: 0.8rem;
+      color: var(--p-text-muted-color);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .acceso:hover {
+      color: var(--p-primary-700);
     }
     .contenido {
       padding: 0 0.25rem 1.5rem;

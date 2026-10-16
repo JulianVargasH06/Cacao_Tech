@@ -1,11 +1,22 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { authGuard, rolGuard } from './core/guards/auth.guard';
+import { AuthService } from './core/services/auth.service';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { PublicLayout } from './layout/public-layout/public-layout';
 
 export const routes: Routes = [
-    { path: '', pathMatch: 'full', redirectTo: 'operador' },
+    {
+        // La dirección principal decide: sin sesión va a la ficha pública (la ven los compradores),
+        // con sesión va a la página de inicio de su rol (panel o recepción).
+        path: '',
+        pathMatch: 'full',
+        redirectTo: () => {
+            const auth = inject(AuthService);
+            return auth.estaAutenticado() ? auth.rutaInicial() : '/publico/producto';
+        }
+    },
     {
         // Páginas públicas (sin login): la ficha comercial del producto (HU06)
         path: 'publico',
