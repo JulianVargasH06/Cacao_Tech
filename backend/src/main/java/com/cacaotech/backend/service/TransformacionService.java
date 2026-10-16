@@ -45,6 +45,7 @@ public class TransformacionService {
     private final MovimientoInventarioRepository movimientoRepository;
     private final LoteRepository loteRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditoriaService auditoriaService;
     private final MermaCalculadora mermaCalculadora = new MermaCalculadora();
 
     public TransformacionService(TransformacionRepository transformacionRepository,
@@ -52,13 +53,15 @@ public class TransformacionService {
                                  SalidaTransformacionRepository salidaRepository,
                                  MovimientoInventarioRepository movimientoRepository,
                                  LoteRepository loteRepository,
-                                 UsuarioRepository usuarioRepository) {
+                                 UsuarioRepository usuarioRepository,
+                                 AuditoriaService auditoriaService) {
         this.transformacionRepository = transformacionRepository;
         this.entradaRepository = entradaRepository;
         this.salidaRepository = salidaRepository;
         this.movimientoRepository = movimientoRepository;
         this.loteRepository = loteRepository;
         this.usuarioRepository = usuarioRepository;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -94,7 +97,12 @@ public class TransformacionService {
         List<EntradaTransformacion> entradas = new ArrayList<>();
         for (TransformacionRequestDto.Entrada e : dto.entradas()) {
             Lote lote = lotesEntrada.get(e.loteId());
-            lote.setCantidadDisponible(lote.getCantidadDisponible().subtract(e.cantidadKg()));
+            BigDecimal disponibleAntes = lote.getCantidadDisponible();
+            lote.setCantidadDisponible(disponibleAntes.subtract(e.cantidadKg()));
+            auditoriaService.registrar("Lote", lote.getId(), "CONSUMO",
+                    Map.of("cantidadDisponible", AuditoriaService.cantidad(disponibleAntes)),
+                    Map.of("cantidadDisponible", AuditoriaService.cantidad(lote.getCantidadDisponible()),
+                            "transformacion", transformacion.getCodigo()));
 
             EntradaTransformacion entrada = new EntradaTransformacion();
             entrada.setTransformacion(transformacion);
@@ -121,6 +129,9 @@ public class TransformacionService {
             resultante.setTipoLote(Lote.TipoLote.RESULTADO_TRANSFORMACION);
             resultante.setEstado(Lote.EstadoLote.PENDIENTE);
             resultante = loteRepository.save(resultante);
+            Map<String, Object> valoresResultante = LoteService.valoresDeLote(resultante);
+            valoresResultante.put("transformacion", transformacion.getCodigo());
+            auditoriaService.registrar("Lote", resultante.getId(), "CREAR", null, valoresResultante);
 
             SalidaTransformacion salida = new SalidaTransformacion();
             salida.setTransformacion(transformacion);
@@ -131,6 +142,9 @@ public class TransformacionService {
             registrarMovimiento(resultante, "PRODUCCION", s.cantidadKg(), responsable, transformacion,
                     "Salida de " + transformacion.getTipo() + " " + transformacion.getCodigo());
         }
+
+        auditoriaService.registrar("Transformacion", transformacion.getId(), "CREAR", null,
+                valoresDeTransformacion(transformacion, dto, lotesEntrada, merma));
 
         return aRespuesta(transformacion, entradas, salidas, merma);
     }
@@ -227,6 +241,25 @@ public class TransformacionService {
                 merma.mermaKg(),
                 merma.mermaPorcentaje()
         );
+    }
+
+    /** Resumen de la transformación para la auditoría: qué entró, qué salió y cuánta merma hubo. */
+    private static Map<String, Object> valoresDeTransformacion(Transformacion t, TransformacionRequestDto dto,
+                                                              Map<Long, Lote> lotesEntrada, ResultadoMerma merma) {
+        Map<String, Object> valores = new LinkedHashMap<>();
+        valores.put("codigo", t.getCodigo());
+        valores.put("tipo", t.getTipo());
+        valores.put("fecha", t.getFecha());
+        valores.put("entradas", dto.entradas().stream()
+                .map(e -> Map.of("lote", lotesEntrada.get(e.loteId()).getCodigo(),
+                        "cantidadKg", AuditoriaService.cantidad(e.cantidadKg())))
+                .toList());
+        valores.put("salidas", dto.salidas().stream()
+                .map(s -> Map.of("lote", s.codigo().trim(), "cantidadKg", AuditoriaService.cantidad(s.cantidadKg())))
+                .toList());
+        valores.put("mermaKg", AuditoriaService.cantidad(merma.mermaKg()));
+        valores.put("mermaPorcentaje", merma.mermaPorcentaje());
+        return valores;
     }
 
     private static String textoOpcional(String texto) {
