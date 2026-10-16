@@ -14,5 +14,9 @@ export const ADMIN_ROUTES: Routes = [
     {
         path: 'mermas-costos',
         loadComponent: () => import('./mermas-costos/mermas-costos').then((m) => m.MermasCostos)
+    },
+    {
+        path: 'trazabilidad',
+        loadComponent: () => import('./trazabilidad/trazabilidad').then((m) => m.Trazabilidad)
     }
 ];
