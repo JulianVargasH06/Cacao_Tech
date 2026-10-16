@@ -22,6 +22,7 @@ export class AuthService {
     readonly estaAutenticado = computed(() => !!this._sesion()?.token);
     readonly rol = computed<Rol | null>(() => this._sesion()?.rol ?? null);
     readonly nombre = computed(() => this._sesion()?.nombre ?? '');
+    readonly correo = computed(() => this._sesion()?.correo ?? '');
 
     token(): string | null {
         return this._sesion()?.token ?? null;
@@ -38,7 +39,7 @@ export class AuthService {
             : this.http.post<LoginResponse>(`${API_URL}/auth/login`, datos);
 
         return respuesta$.pipe(
-            map((r) => ({ token: r.token, rol: normalizarRol(r.rol), nombre: r.nombre ?? r.correo })),
+            map((r) => ({ token: r.token, rol: normalizarRol(r.rol), nombre: r.nombre ?? r.correo, correo: r.correo })),
             tap((sesion) => this.guardarSesion(sesion))
         );
     }
