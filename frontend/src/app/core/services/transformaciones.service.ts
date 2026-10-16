@@ -4,7 +4,7 @@ import { Observable, delay, map, of, timer } from 'rxjs';
 
 import { API_URL } from '../config/api.config';
 import { USAR_MOCK_API } from '../config/dev.config';
-import { Transformacion, TransformacionRequest } from '../models/transformacion.models';
+import { CostoRequest, CostosTransformacion, Transformacion, TransformacionRequest } from '../models/transformacion.models';
 import { AuthService } from './auth.service';
 import { LotesService } from './lotes.service';
 
@@ -40,6 +40,16 @@ export class TransformacionesService {
     registrar(datos: TransformacionRequest): Observable<Transformacion> {
         if (USAR_MOCK_API) return this.registrarSimulado(datos);
         return this.http.post<Transformacion>(this.url, datos);
+    }
+
+    /** GET /api/transformaciones/{id}/costos (HU05 · Administrador) */
+    costos(id: number): Observable<CostosTransformacion> {
+        return this.http.get<CostosTransformacion>(`${this.url}/${id}/costos`);
+    }
+
+    /** POST /api/transformaciones/{id}/costos (HU05 · Administrador): agrega un costo y reparte el total. */
+    registrarCosto(id: number, costo: CostoRequest): Observable<CostosTransformacion> {
+        return this.http.post<CostosTransformacion>(`${this.url}/${id}/costos`, costo);
     }
 
     /**

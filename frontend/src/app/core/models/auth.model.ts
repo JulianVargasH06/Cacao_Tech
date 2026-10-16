@@ -19,6 +19,7 @@ export interface Sesion {
     token: string;
     rol: Rol;
     nombre: string;
+    correo?: string; // opcional: las sesiones guardadas antes de este cambio no lo tienen
 }
 
 /** Convierte lo que mande el backend ("ROLE_ADMIN", "admin", "Operador"...) a nuestro tipo Rol. */

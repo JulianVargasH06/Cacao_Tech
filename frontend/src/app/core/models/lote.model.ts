@@ -1,4 +1,4 @@
-// OJO: nombres tomados de model/Lote.java del backend (PR #7). Confirmar cuando exista el JSON real de la API.
+// Sigue model/Lote.java y los DTOs de /api/lotes del backend.
 
 export type EstadoLote = 'PENDIENTE' | 'LIBERADO' | 'BLOQUEADO';
 export type TipoLote = 'RECEPCION' | 'RESULTADO_TRANSFORMACION';
@@ -21,15 +21,21 @@ export interface Lote extends LoteRequest {
     estado: EstadoLote; // un lote BLOQUEADO no se puede transformar
 }
 
-export interface EventoTrazabilidad {
-    fecha: string;
-    etapa: string;
-    descripcion: string;
-    cantidad?: number;
-    unidad?: string;
+/** Filtros opcionales de GET /api/lotes y GET /api/lotes/exportar (HU11). */
+export interface FiltroLotes {
+    codigo?: string; // contiene, sin importar mayúsculas
+    estado?: EstadoLote;
+    tipoLote?: TipoLote;
+    desde?: string; // yyyy-MM-dd
+    hasta?: string; // yyyy-MM-dd
 }
 
-export interface TrazabilidadLote {
-    lote: Lote;
-    eventos: EventoTrazabilidad[];
+/** GET /api/lotes/{id}/margen (HU05): margen sobre venta de un lote resultante. */
+export interface Margen {
+    loteId: number;
+    codigo: string;
+    costoUnitarioCop: number;
+    precioVentaKgCop: number;
+    gananciaPorKgCop: number; // negativa si se vende por debajo del costo
+    margenPorcentaje: number;
 }
