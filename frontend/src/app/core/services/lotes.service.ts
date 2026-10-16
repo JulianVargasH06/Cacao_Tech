@@ -4,7 +4,9 @@ import { Observable, delay, map, of, timer } from 'rxjs';
 
 import { API_URL } from '../config/api.config';
 import { USAR_MOCK_API } from '../config/dev.config';
-import { Lote, LoteRequest, TipoLote, TrazabilidadLote } from '../models/lote.model';
+import { FiltroLotes, Lote, LoteRequest, Margen, TipoLote } from '../models/lote.model';
+import { CambioEstadoRequest, HistorialEstado } from '../models/producto.model';
+import { paramsDe } from '../../shared/utils/http-params';
 
 @Injectable({ providedIn: 'root' })
 export class LotesService {
@@ -36,15 +38,10 @@ export class LotesService {
         }
     ];
 
-    /** GET /api/lotes */
-    listar(): Observable<Lote[]> {
+    /** GET /api/lotes con filtros opcionales (HU11). La simulación ignora los filtros. */
+    listar(filtro: FiltroLotes = {}): Observable<Lote[]> {
         if (USAR_MOCK_API) return of([...this.simulados]).pipe(delay(300));
-        return this.http.get<Lote[]>(this.url);
-    }
-
-    /** GET /api/lotes/{id} */
-    obtener(id: number | string): Observable<Lote> {
-        return this.http.get<Lote>(`${this.url}/${id}`);
+        return this.http.get<Lote[]>(this.url, { params: paramsDe(filtro) });
     }
 
     /** POST /api/lotes/recepcion (HU01 · Operador) */
@@ -53,14 +50,24 @@ export class LotesService {
         return this.http.post<Lote>(`${this.url}/recepcion`, datos);
     }
 
-    /** GET /api/lotes/{id}/trazabilidad (HU03 · Administrador) */
-    trazabilidad(id: number | string): Observable<TrazabilidadLote> {
-        return this.http.get<TrazabilidadLote>(`${this.url}/${id}/trazabilidad`);
+    /** GET /api/lotes/exportar (HU11 · Administrador): CSV con los mismos filtros, como archivo. */
+    exportarCsv(filtro: FiltroLotes = {}): Observable<Blob> {
+        return this.http.get(`${this.url}/exportar`, { params: paramsDe(filtro), responseType: 'blob' });
     }
 
-    /** GET /api/lotes/exportar (HU11 · Administrador). Devuelve el CSV como archivo. */
-    exportarCsv(): Observable<Blob> {
-        return this.http.get(`${this.url}/exportar`, { responseType: 'blob' });
+    /** PATCH /api/lotes/{id}/estado (HU09 · Administrador): liberar o bloquear con motivo. */
+    cambiarEstado(id: number, cambio: CambioEstadoRequest): Observable<Lote> {
+        return this.http.patch<Lote>(`${this.url}/${id}/estado`, cambio);
+    }
+
+    /** GET /api/lotes/{id}/historial-estados */
+    historialEstados(id: number): Observable<HistorialEstado[]> {
+        return this.http.get<HistorialEstado[]>(`${this.url}/${id}/historial-estados`);
+    }
+
+    /** GET /api/lotes/{id}/margen?precioVentaKg= (HU05 · Administrador) */
+    margen(id: number, precioVentaKg: number): Observable<Margen> {
+        return this.http.get<Margen>(`${this.url}/${id}/margen`, { params: paramsDe({ precioVentaKg }) });
     }
 
     /** Imita al backend: rechaza códigos repetidos (400, igual que LoteService) y deja todo lo recibido como disponible. */

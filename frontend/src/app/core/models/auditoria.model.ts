@@ -1,5 +1,15 @@
 // Sigue AuditoriaResponseDto del backend (GET /api/auditoria).
 
+/** Filtros opcionales de GET /api/auditoria (HU10). */
+export interface FiltroAuditoria {
+    entidad?: string; // Lote, Transformacion, Alerta, Incidencia, Costo, Usuario
+    entidadId?: number;
+    accion?: string; // CREAR, CONSUMO, CAMBIAR_ESTADO, RESOLVER, ACTUALIZAR
+    usuario?: string; // correo
+    desde?: string; // yyyy-MM-dd
+    hasta?: string; // yyyy-MM-dd
+}
+
 /** Un cambio registrado por el sistema (HU10): quién hizo qué, sobre qué y cómo quedó. */
 export interface RegistroAuditoria {
     id: number;

@@ -4,7 +4,8 @@ import { Observable, forkJoin, map } from 'rxjs';
 
 import { API_URL } from '../config/api.config';
 import { USAR_MOCK_AUDITORIA } from '../config/dev.config';
-import { RegistroAuditoria } from '../models/auditoria.model';
+import { FiltroAuditoria, RegistroAuditoria } from '../models/auditoria.model';
+import { paramsDe } from '../../shared/utils/http-params';
 import { LotesService } from './lotes.service';
 import { TransformacionesService } from './transformaciones.service';
 
@@ -16,9 +17,9 @@ export class AuditoriaService {
     private readonly url = `${API_URL}/auditoria`;
 
     /** GET /api/auditoria (HU10 · solo Administrador) */
-    listar(): Observable<RegistroAuditoria[]> {
+    listar(filtro: FiltroAuditoria = {}): Observable<RegistroAuditoria[]> {
         if (USAR_MOCK_AUDITORIA) return this.listarSimulado();
-        return this.http.get<RegistroAuditoria[]>(this.url);
+        return this.http.get<RegistroAuditoria[]>(this.url, { params: paramsDe(filtro) });
     }
 
     /**

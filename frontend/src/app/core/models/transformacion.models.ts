@@ -22,6 +22,8 @@ export interface SalidaTransformacion {
     codigo: string;
     cantidadKg: number;
     loteId?: number; // solo en la respuesta: el lote nuevo que se creó
+    costoAsignadoCop?: number; // solo en la respuesta; null si la transformación aún no tiene costos
+    costoUnitarioCop?: number;
 }
 
 /** Lo que enviamos al registrar una transformación (HU02). El responsable sale del token. */
@@ -40,4 +42,22 @@ export interface Transformacion extends TransformacionRequest {
     responsable: string; // nombre del usuario que la registró
     mermaKg?: number;
     mermaPorcentaje?: number;
+    costoTotalCop?: number; // suma de sus costos (HU05)
+    alerta?: { id: number; tipo: string; descripcion: string } | null; // merma alta: los lotes resultantes quedaron bloqueados
+}
+
+/** Cuerpo de POST /api/transformaciones/{id}/costos (HU05). */
+export interface CostoRequest {
+    categoria: string; // ej. MANO_DE_OBRA, ENERGIA, EMPAQUE
+    descripcion: string;
+    valorCop: number;
+}
+
+/** Costos de una transformación y su reparto entre las salidas según sus kg. */
+export interface CostosTransformacion {
+    transformacionId: number;
+    codigo: string;
+    costoTotalCop: number;
+    costos: { id: number; categoria: string; descripcion: string; valorCop: number; fecha: string; usuario: string }[];
+    salidas: { loteId: number; codigo: string; cantidadKg: number; costoAsignadoCop?: number; costoUnitarioCop?: number }[];
 }
