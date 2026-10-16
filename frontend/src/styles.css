@@ -43,3 +43,13 @@ body {
     -webkit-backdrop-filter: blur(14px) saturate(140%);
     border: 1px solid rgba(255, 255, 255, 0.7);
 }
+
+/* Opción del menú de la página actual. Va global porque en celular el menú se dibuja dentro del drawer, fuera del layout. */
+.p-menu .p-menu-item-link-active {
+    background: var(--p-primary-600);
+    border-radius: 999px;
+}
+.p-menu .p-menu-item-link-active .p-menu-item-icon,
+.p-menu .p-menu-item-link-active .p-menu-item-label {
+    color: #fff;
+}

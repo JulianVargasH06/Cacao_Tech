@@ -42,11 +42,11 @@ export class TransformacionesService {
                     if (!lote) {
                         throw this.error(404, 'El lote de entrada no existe');
                     }
+                    if (lote.estado === 'BLOQUEADO') {
+                        throw this.error(422, `El lote ${lote.codigo} está bloqueado y no se puede transformar`);
+                    }
                     if (entrada.cantidadKg > lote.cantidadDisponible) {
-                        throw this.error(
-                            422,
-                            `El lote ${lote.codigo} solo tiene ${lote.cantidadDisponible} ${lote.unidad} disponibles`
-                        );
+                        throw this.error(422, `El lote ${lote.codigo} solo tiene ${lote.cantidadDisponible} kg disponibles`);
                     }
                 }
 
@@ -66,14 +66,16 @@ export class TransformacionesService {
                 const origen = this.lotes.simuladoPorId(datos.entradas[0].loteId)!;
                 datos.entradas.forEach((e) => this.lotes.consumirSimulado(e.loteId, e.cantidadKg));
                 datos.salidas.forEach((s) =>
-                    this.lotes.crearSimulado({
-                        codigo: s.codigo,
-                        productor: origen.productor,
-                        origen: origen.origen,
-                        fechaRecepcion: datos.fecha.slice(0, 10),
-                        cantidadRecibida: s.cantidadKg,
-                        unidad: origen.unidad
-                    })
+                    this.lotes.crearSimulado(
+                        {
+                            codigo: s.codigo,
+                            productor: origen.productor,
+                            origen: origen.origen,
+                            fechaRegistro: datos.fecha.slice(0, 10),
+                            cantidadInicial: s.cantidadKg
+                        },
+                        'RESULTADO_TRANSFORMACION'
+                    )
                 );
 
                 const numero = this.simuladas.length + 1;

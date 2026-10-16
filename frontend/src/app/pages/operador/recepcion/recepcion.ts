@@ -8,11 +8,10 @@ import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { LoteRequest, UNIDADES, Unidad } from '../../../core/models/lote.model';
+import { LoteRequest } from '../../../core/models/lote.model';
 import { LotesService } from '../../../core/services/lotes.service';
 import { PageHeader } from '../../../shared/page-header/page-header';
-import { aFechaIso, fechaNoFutura } from '../../../shared/utils/fechas';
+import { aFechaIso, fechaNoFutura, finDelDia } from '../../../shared/utils/fechas';
 
 @Component({
     selector: 'app-recepcion',
@@ -23,14 +22,13 @@ import { aFechaIso, fechaNoFutura } from '../../../shared/utils/fechas';
         InputTextModule,
         InputNumberModule,
         DatePickerModule,
-        SelectModule,
         ButtonModule,
         ToastModule
     ],
     providers: [MessageService],
     template: `
     <section class="page">
-        <p-toast />
+      <p-toast />
       <app-page-header
         titulo="Recepción de lotes"
         descripcion="Registra los lotes de cacao que llegan a la asociación"
@@ -42,32 +40,32 @@ import { aFechaIso, fechaNoFutura } from '../../../shared/utils/fechas';
         <form [formGroup]="form" (ngSubmit)="guardar()" class="formulario">
           <div class="campo">
             <label for="codigo">Código del lote</label>
-            <input pInputText id="codigo" formControlName="codigo" placeholder="Ej: L-003" />
+            <input pInputText id="codigo" formControlName="codigo" placeholder="Ej: L-004" />
             @if (tieneError('codigo', 'required')) {
               <small class="error">El código es obligatorio</small>
             }
             @if (tieneError('codigo', 'maxlength')) {
-              <small class="error">Máximo 20 caracteres</small>
+              <small class="error">Máximo 30 caracteres</small>
             }
             @if (tieneError('codigo', 'duplicado')) {
-                <small class="error">Ya existe un lote con este código</small>
-                }
+              <small class="error">Ya existe un lote con este código</small>
+            }
           </div>
 
           <div class="campo">
             <label for="fecha">Fecha de recepción</label>
             <p-datepicker
               inputId="fecha"
-              formControlName="fechaRecepcion"
+              formControlName="fechaRegistro"
               [maxDate]="hoy"
               dateFormat="dd/mm/yy"
               [showIcon]="true"
               [fluid]="true"
             />
-            @if (tieneError('fechaRecepcion', 'required')) {
+            @if (tieneError('fechaRegistro', 'required')) {
               <small class="error">La fecha es obligatoria</small>
             }
-            @if (tieneError('fechaRecepcion', 'fechaFutura')) {
+            @if (tieneError('fechaRegistro', 'fechaFutura')) {
               <small class="error">La fecha no puede ser futura</small>
             }
           </div>
@@ -92,24 +90,20 @@ import { aFechaIso, fechaNoFutura } from '../../../shared/utils/fechas';
             <label for="cantidad">Cantidad recibida</label>
             <p-inputnumber
               inputId="cantidad"
-              formControlName="cantidadRecibida"
+              formControlName="cantidadInicial"
               [minFractionDigits]="0"
               [maxFractionDigits]="2"
+              suffix=" kg"
               locale="es-CO"
               placeholder="0"
               [fluid]="true"
             />
-            @if (tieneError('cantidadRecibida', 'required')) {
+            @if (tieneError('cantidadInicial', 'required')) {
               <small class="error">La cantidad es obligatoria</small>
             }
-            @if (tieneError('cantidadRecibida', 'min')) {
+            @if (tieneError('cantidadInicial', 'min')) {
               <small class="error">La cantidad debe ser mayor que 0</small>
             }
-          </div>
-
-          <div class="campo">
-            <label for="unidad">Unidad</label>
-            <p-select inputId="unidad" formControlName="unidad" [options]="unidades" [fluid]="true" />
           </div>
 
           <div class="acciones">
@@ -157,16 +151,15 @@ export class Recepcion {
     private readonly lotes = inject(LotesService);
     private readonly mensajes = inject(MessageService);
     protected readonly guardando = signal(false);
-    protected readonly unidades = UNIDADES;
-    protected readonly hoy = new Date();
+    /** Tope del calendario: fin del día de hoy (si fuera "ahora", al limpiar la hora actual quedaría fuera del tope). */
+    protected readonly hoy = finDelDia();
 
     protected readonly form = inject(FormBuilder).group({
-        codigo: ['', [Validators.required, Validators.maxLength(20)]],
-        fechaRecepcion: [new Date() as Date | null, [Validators.required, fechaNoFutura]],
+        codigo: ['', [Validators.required, Validators.maxLength(30)]],
+        fechaRegistro: [new Date() as Date | null, [Validators.required, fechaNoFutura]],
         productor: ['', Validators.required],
         origen: ['', Validators.required],
-        cantidadRecibida: [null as number | null, [Validators.required, Validators.min(0.01)]],
-        unidad: ['kg' as Unidad, Validators.required]
+        cantidadInicial: [null as number | null, [Validators.required, Validators.min(0.01)]]
     });
 
     /** true si el campo ya fue tocado y tiene ese error. */
@@ -186,9 +179,8 @@ export class Recepcion {
             codigo: valores.codigo!.trim(),
             productor: valores.productor!.trim(),
             origen: valores.origen!.trim(),
-            fechaRecepcion: aFechaIso(valores.fechaRecepcion!),
-            cantidadRecibida: valores.cantidadRecibida!,
-            unidad: valores.unidad!
+            fechaRegistro: aFechaIso(valores.fechaRegistro!),
+            cantidadInicial: valores.cantidadInicial!
         };
 
         this.guardando.set(true);
@@ -198,7 +190,7 @@ export class Recepcion {
                 this.mensajes.add({
                     severity: 'success',
                     summary: 'Lote registrado',
-                    detail: `${lote.codigo} · ${lote.cantidadRecibida} ${lote.unidad}`
+                    detail: `${lote.codigo} · ${lote.cantidadInicial} kg`
                 });
                 this.limpiar();
             },
@@ -218,6 +210,6 @@ export class Recepcion {
     }
 
     protected limpiar(): void {
-        this.form.reset({ fechaRecepcion: new Date(), unidad: 'kg' });
+        this.form.reset({ fechaRegistro: new Date() });
     }
 }
