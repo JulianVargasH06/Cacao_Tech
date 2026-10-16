@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -12,22 +12,7 @@ import { SelectModule } from 'primeng/select';
 import { LoteRequest, UNIDADES, Unidad } from '../../../core/models/lote.model';
 import { LotesService } from '../../../core/services/lotes.service';
 import { PageHeader } from '../../../shared/page-header/page-header';
-
-/** Valida que la fecha no sea posterior a hoy. */
-function fechaNoFutura(control: AbstractControl): ValidationErrors | null {
-    const fecha = control.value as Date | null;
-    if (!fecha) return null; // si está vacía, de eso se encarga Validators.required
-    const finDeHoy = new Date();
-    finDeHoy.setHours(23, 59, 59, 999);
-    return fecha > finDeHoy ? { fechaFutura: true } : null;
-}
-
-function aFechaIso(fecha: Date): string {
-    const anio = fecha.getFullYear();
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    return `${anio}-${mes}-${dia}`;
-}
+import { aFechaIso, fechaNoFutura } from '../../../shared/utils/fechas';
 
 @Component({
     selector: 'app-recepcion',

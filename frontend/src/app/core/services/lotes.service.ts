@@ -49,20 +49,43 @@ export class LotesService {
         return this.http.get(`${this.url}/exportar`, { responseType: 'blob' });
     }
 
+    /** Imita al backend: rechaza códigos repetidos (409) y deja todo lo recibido como disponible. */
     private registrarSimulado(datos: LoteRequest): Observable<Lote> {
         return timer(400).pipe(
             map(() => {
-                const repetido = this.simulados.some((l) => l.codigo.toLowerCase() === datos.codigo.toLowerCase());
-                if (repetido) {
+                if (this.existeCodigoSimulado(datos.codigo)) {
                     throw new HttpErrorResponse({
                         status: 409,
                         error: { mensaje: `Ya existe un lote con el código ${datos.codigo}` }
                     });
                 }
-                const lote: Lote = { ...datos, id: this.simulados.length + 1, cantidadDisponible: datos.cantidadRecibida };
-                this.simulados.unshift(lote);
-                return lote;
+                return this.crearSimulado(datos);
             })
         );
+    }
+
+    // --- Ayudas para otras simulaciones (TransformacionesService). No se usan con el backend real. ---
+
+    simuladoPorId(id: number): Lote | undefined {
+        return this.simulados.find((l) => l.id === id);
+    }
+
+    existeCodigoSimulado(codigo: string): boolean {
+        return this.simulados.some((l) => l.codigo.toLowerCase() === codigo.toLowerCase());
+    }
+
+    crearSimulado(datos: LoteRequest): Lote {
+        const lote: Lote = { ...datos, id: this.simulados.length + 1, cantidadDisponible: datos.cantidadRecibida };
+        this.simulados.unshift(lote);
+        return lote;
+    }
+
+    /** Descuenta lo que una transformación tomó del lote. */
+    consumirSimulado(id: number, cantidad: number): void {
+        const i = this.simulados.findIndex((l) => l.id === id);
+        if (i === -1) return;
+        const lote = this.simulados[i];
+        const disponible = Math.round((lote.cantidadDisponible - cantidad) * 100) / 100;
+        this.simulados[i] = { ...lote, cantidadDisponible: disponible };
     }
 }
