@@ -83,6 +83,20 @@ class CompletarBackendIntegrationTest {
                         .header("Authorization", bearer(operadorToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", empty()));
+
+        // Origen o productor (CP-12): "Rivera, Huila" y "Finca de Prueba", sin importar mayúsculas
+        mockMvc.perform(get("/api/lotes").param("codigo", codigo).param("origen", "rivera")
+                        .header("Authorization", bearer(operadorToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].codigo").value(hasItem(codigo)));
+        mockMvc.perform(get("/api/lotes").param("codigo", codigo).param("origen", "FINCA DE PRUEBA")
+                        .header("Authorization", bearer(operadorToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].codigo").value(hasItem(codigo)));
+        mockMvc.perform(get("/api/lotes").param("codigo", codigo).param("origen", "Pitalito")
+                        .header("Authorization", bearer(operadorToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", empty()));
     }
 
     @Test
@@ -91,7 +105,7 @@ class CompletarBackendIntegrationTest {
         String codigo = codigo("CSV");
         registrarLote(codigo, "125.5");
 
-        MvcResult r = mockMvc.perform(get("/api/lotes/exportar").param("codigo", codigo)
+        MvcResult r = mockMvc.perform(get("/api/lotes/exportar").param("codigo", codigo).param("origen", "Rivera")
                         .header("Authorization", bearer(adminToken)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", containsString("attachment; filename=\"lotes-")))

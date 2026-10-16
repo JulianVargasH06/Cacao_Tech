@@ -50,11 +50,12 @@ public class LoteController {
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
     public ResponseEntity<List<Lote>> listar(
             @RequestParam(required = false) String codigo,
+            @RequestParam(required = false) String origen,
             @RequestParam(required = false) Lote.EstadoLote estado,
             @RequestParam(required = false) Lote.TipoLote tipoLote,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
-        return ResponseEntity.ok(loteService.listar(new FiltroLotes(codigo, estado, tipoLote, desde, hasta)));
+        return ResponseEntity.ok(loteService.listar(new FiltroLotes(codigo, origen, estado, tipoLote, desde, hasta)));
     }
 
     /** GET /api/lotes/exportar (HU11 · solo Administrador): CSV con los mismos filtros de GET /api/lotes. */
@@ -62,11 +63,12 @@ public class LoteController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<byte[]> exportar(
             @RequestParam(required = false) String codigo,
+            @RequestParam(required = false) String origen,
             @RequestParam(required = false) Lote.EstadoLote estado,
             @RequestParam(required = false) Lote.TipoLote tipoLote,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
-        byte[] csv = loteService.exportarCsv(new FiltroLotes(codigo, estado, tipoLote, desde, hasta));
+        byte[] csv = loteService.exportarCsv(new FiltroLotes(codigo, origen, estado, tipoLote, desde, hasta));
         String archivo = "lotes-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + ".csv";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + archivo + "\"")
