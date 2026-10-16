@@ -42,7 +42,7 @@ ajustado** y **prueba de regresión**, más el guion para mostrarlo.
 >    origen); un lote bloqueado no se puede volver a transformar.
 > 4. Se genera una **alerta de retiro** que explica el incidente, el origen y los kg retenidos.
 > 5. **No se borra nada**: los lotes, transformaciones, historial de estados y auditoría se conservan, y la
->    ficha pública muestra el producto como "En revisión de calidad".
+>    ficha pública muestra el producto como "Bloqueado · en revisión de calidad".
 
 ---
 
@@ -86,5 +86,5 @@ Las pruebas corren en una transacción que se revierte al final: no dejan datos 
    - el **historial de estados** del lote con el motivo,
    - la **auditoría** (`CAMBIAR_ESTADO` de cada lote),
    - la **alerta de retiro** en el Panel / Mermas y costos,
-   - la **ficha pública**: el recorrido sigue completo y el producto aparece "En revisión de calidad".
+   - la **ficha pública**: el recorrido sigue completo y el producto aparece "Bloqueado · en revisión de calidad".
 6. Ejecutar la **prueba de regresión** (`./mvnw test`) y mostrar `BUILD SUCCESS`.

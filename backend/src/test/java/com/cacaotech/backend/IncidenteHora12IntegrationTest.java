@@ -161,10 +161,10 @@ class IncidenteHora12IntegrationTest {
                 .andExpect(jsonPath("$[*].accion", hasItem("CAMBIAR_ESTADO")))
                 .andExpect(jsonPath("$[*].accion", hasItem("CREAR")));
 
-        // La ficha pública sigue mostrando el recorrido completo, ahora "En revisión de calidad"
+        // La ficha pública sigue mostrando el recorrido completo, ahora "Bloqueado · en revisión de calidad"
         mockMvc.perform(get("/api/publico/productos/" + codigoProducto))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estadoDescripcion").value("En revisión de calidad"))
+                .andExpect(jsonPath("$.estadoDescripcion").value("Bloqueado · en revisión de calidad"))
                 .andExpect(jsonPath("$.recorrido", hasSize(3)));
 
         // Y queda una alerta de retiro explicable

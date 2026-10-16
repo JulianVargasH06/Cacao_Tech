@@ -124,7 +124,7 @@ class TrazabilidadPublicaIntegrationTest {
     }
 
     @Test
-    @DisplayName("5. Producto bloqueado por merma: se ve 'En revisión de calidad' pero no el motivo ni la merma")
+    @DisplayName("5. Producto bloqueado por merma: se ve 'Bloqueado · en revisión de calidad' pero no el motivo ni la merma")
     void testProductoBloqueadoSinMotivo() throws Exception {
         long lote = registrarLote(codigo("TRZ-BLQ"), "Finca La Esperanza", "Rivera, Huila", 3, "100");
         String salida = codigo("TRZ-BLQ-SEC");
@@ -133,7 +133,7 @@ class TrazabilidadPublicaIntegrationTest {
         MvcResult r = mockMvc.perform(get("/api/publico/trazabilidad/" + salida))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("BLOQUEADO"))
-                .andExpect(jsonPath("$.estadoDescripcion").value("En revisión de calidad"))
+                .andExpect(jsonPath("$.estadoDescripcion").value("Bloqueado · en revisión de calidad"))
                 .andReturn();
 
         String cuerpo = r.getResponse().getContentAsString();

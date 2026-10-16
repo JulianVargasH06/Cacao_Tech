@@ -114,7 +114,7 @@ public class TrazabilidadService {
     private static String descripcionEstado(Lote.EstadoLote estado) {
         return switch (estado) {
             case LIBERADO -> "Liberado para la venta";
-            case BLOQUEADO -> "En revisión de calidad";
+            case BLOQUEADO -> "Bloqueado · en revisión de calidad";
             case PENDIENTE -> "Pendiente de liberación";
         };
     }
