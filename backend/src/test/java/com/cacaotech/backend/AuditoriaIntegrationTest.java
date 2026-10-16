@@ -86,7 +86,7 @@ class AuditoriaIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new TransformacionRequestDto(
                                 "TOSTADO",
-                                LocalDateTime.now().minusHours(1).withNano(0),
+                                LocalDateTime.now().minusMinutes(1).withNano(0),
                                 List.of(new TransformacionRequestDto.Entrada(entradaId, new BigDecimal("40"))),
                                 List.of(new TransformacionRequestDto.Salida(codigoSalida, new BigDecimal("36"))),
                                 null))))

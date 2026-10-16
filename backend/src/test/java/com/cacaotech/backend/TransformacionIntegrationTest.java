@@ -137,12 +137,29 @@ class TransformacionIntegrationTest {
     @DisplayName("6. Validación del cuerpo: sin entradas responde 400 con el detalle del campo")
     void testSinEntradas() throws Exception {
         TransformacionRequestDto dto = new TransformacionRequestDto(
-                "SECADO", LocalDateTime.now().minusHours(1).withNano(0), List.of(),
+                "SECADO", LocalDateTime.now().minusMinutes(1).withNano(0), List.of(),
                 List.of(new TransformacionRequestDto.Salida(codigoUnico("TEST-SAL"), new BigDecimal("5"))), null);
 
         enviar(dto)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detalles.entradas").value("Debe haber al menos un lote de entrada"));
+    }
+
+    @Test
+    @DisplayName("6b. Fecha anterior a la recepción del lote: 400 y no se descuenta nada")
+    void testFechaAnteriorALaRecepcion() throws Exception {
+        TransformacionRequestDto dto = new TransformacionRequestDto(
+                "SECADO", LocalDateTime.now().minusDays(1).withNano(0),
+                List.of(new TransformacionRequestDto.Entrada(loteEntrada.getId(), new BigDecimal("10"))),
+                List.of(new TransformacionRequestDto.Salida(codigoUnico("TEST-SAL"), new BigDecimal("9"))), null);
+
+        enviar(dto)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(startsWith(
+                        "La transformación no puede ser anterior a la recepción del lote " + loteEntrada.getCodigo())));
+
+        assertThat(loteRepository.findById(loteEntrada.getId()).orElseThrow().getCantidadDisponible())
+                .isEqualByComparingTo("150");
     }
 
     @Test
@@ -180,7 +197,7 @@ class TransformacionIntegrationTest {
     private TransformacionRequestDto solicitud(Long loteId, String entradaKg, String codigoSalida, String salidaKg) {
         return new TransformacionRequestDto(
                 "secado",
-                LocalDateTime.now().minusHours(1).withNano(0),
+                LocalDateTime.now().minusMinutes(1).withNano(0),
                 List.of(new TransformacionRequestDto.Entrada(loteId, new BigDecimal(entradaKg))),
                 List.of(new TransformacionRequestDto.Salida(codigoSalida, new BigDecimal(salidaKg))),
                 "Prueba automática");
