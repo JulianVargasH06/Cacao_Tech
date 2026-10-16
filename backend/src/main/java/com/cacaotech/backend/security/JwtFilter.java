@@ -48,7 +48,8 @@ public class JwtFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            if (jwtUtil.validateToken(jwt, userDetails)) {
+            // isEnabled(): un usuario desactivado (HU14) pierde el acceso aunque su token no haya vencido
+            if (jwtUtil.validateToken(jwt, userDetails) && userDetails.isEnabled()) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

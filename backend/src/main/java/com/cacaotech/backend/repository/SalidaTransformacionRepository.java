@@ -9,7 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface SalidaTransformacionRepository extends JpaRepository<SalidaTransformacion, Long> {
-    List<SalidaTransformacion> findByTransformacionId(Long transformacionId);
+    /** En el orden en que se registraron (el reparto de costos y las respuestas dependen de ese orden). */
+    List<SalidaTransformacion> findByTransformacionIdOrderByIdAsc(Long transformacionId);
 
     /** La salida que creó un lote: permite saber de qué transformación vino (trazabilidad hacia atrás). */
     Optional<SalidaTransformacion> findByLoteResultanteId(Long loteResultanteId);
