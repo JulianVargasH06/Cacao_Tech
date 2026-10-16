@@ -1,0 +1,1 @@
+export const USAR_MOCK_AUTH = true

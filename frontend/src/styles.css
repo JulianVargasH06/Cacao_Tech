@@ -1,1 +1,45 @@
-/* You can add global styles to this file, and also import other style files */
+@import "primeicons/primeicons.css";
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+/* Fondo difuminado tipo "acrílico": manchas suaves de cacao y crema mezcladas */
+body {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--p-text-color);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-color: #faf6f2;
+    background-image:
+        radial-gradient(60rem 40rem at 8% -10%, rgba(166, 115, 72, 0.38), transparent 62%),
+        radial-gradient(50rem 36rem at 100% 5%, rgba(207, 174, 138, 0.5), transparent 58%),
+        radial-gradient(46rem 36rem at 55% 110%, rgba(117, 74, 49, 0.26), transparent 62%);
+    background-attachment: fixed;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Contenedor estándar para el contenido de cada página */
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.p-drawer {
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-radius: 0 1.5rem 1.5rem 0;
+}
+
+/* Efecto cristal para las tarjetas de PrimeNG */
+.p-card {
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+}
