@@ -18,6 +18,11 @@ export const routes: Routes = [
                 path: 'operador',
                 canActivate: [rolGuard('OPERADOR')],
                 loadChildren: () => import('./pages/operador/operador.routes').then((m) => m.OPERADOR_ROUTES)
+            },
+            {
+                // Compartida: la ven ambos roles (solo pide sesión, por el authGuard del layout)
+                path: 'historial',
+                loadComponent: () => import('./pages/historial/historial').then((m) => m.Historial)
             }
             // Frontend 2: { path: 'admin', canActivate: [rolGuard('ADMINISTRADOR')], loadChildren: ... }
         ]
