@@ -6,5 +6,9 @@ export const ADMIN_ROUTES: Routes = [
     {
         path: 'panel',
         loadComponent: () => import('./panel/panel').then((m) => m.Panel)
+    },
+    {
+        path: 'productos',
+        loadComponent: () => import('./productos/productos').then((m) => m.Productos)
     }
 ];
