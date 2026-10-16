@@ -1,14 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { MainLayout } from './layout/main-layout/main-layout';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MainLayout],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
-  protected readonly title = signal('cacao-frontend');
-}
+export class App { }
 
