@@ -3,8 +3,11 @@ package com.cacaotech.backend.service;
 import com.cacaotech.backend.dto.LoteRequestDto;
 import com.cacaotech.backend.model.Lote;
 import com.cacaotech.backend.repository.LoteRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class LoteService {
@@ -37,5 +40,11 @@ public class LoteService {
         lote.setEstado(Lote.EstadoLote.PENDIENTE);
 
         return loteRepository.save(lote);
+    }
+
+    /** Todos los lotes, del más reciente al más antiguo (inventario e historial del frontend). */
+    @Transactional(readOnly = true)
+    public List<Lote> listar() {
+        return loteRepository.findAll(Sort.by(Sort.Direction.DESC, "fechaRegistro", "id"));
     }
 }

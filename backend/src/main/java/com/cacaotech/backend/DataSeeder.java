@@ -23,7 +23,7 @@ public class DataSeeder {
                 return rolRepository.save(r);
             });
 
-            rolRepository.findByNombre("OPERADOR").orElseGet(() -> {
+            Rol rolOperador = rolRepository.findByNombre("OPERADOR").orElseGet(() -> {
                 Rol r = new Rol();
                 r.setNombre("OPERADOR");
                 return rolRepository.save(r);
@@ -38,6 +38,18 @@ public class DataSeeder {
                 admin.setActivo(true);
                 admin.setCreadoEn(LocalDateTime.now());
                 usuarioRepository.save(admin);
+            }
+
+            // Usuario de prueba para las páginas del operador (recepción, transformaciones, inventario)
+            if (usuarioRepository.findByCorreo("operador@cacaotech.com").isEmpty()) {
+                Usuario operador = new Usuario();
+                operador.setNombre("Operador CacaoTech");
+                operador.setCorreo("operador@cacaotech.com");
+                operador.setPasswordHash(passwordEncoder.encode("operador123"));
+                operador.setRol(rolOperador);
+                operador.setActivo(true);
+                operador.setCreadoEn(LocalDateTime.now());
+                usuarioRepository.save(operador);
             }
         };
     }
