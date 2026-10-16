@@ -16,7 +16,19 @@ export class TransformacionesService {
     private readonly url = `${API_URL}/transformaciones`;
 
     /** Datos de prueba mientras USAR_MOCK_API = true. Se pierden al recargar la página. */
-    private readonly simuladas: Transformacion[] = [];
+    private readonly simuladas: Transformacion[] = [
+        {
+            // Explica los 80 kg consumidos de L-001 en los datos de prueba de LotesService
+            id: 1,
+            codigo: 'TR-001',
+            tipo: 'FERMENTACION',
+            fecha: '2026-10-11T08:30:00',
+            entradas: [{ loteId: 1, cantidadKg: 80 }],
+            salidas: [{ codigo: 'L-001-FER', cantidadKg: 72 }],
+            observaciones: 'Fermentación de 6 días en cajones',
+            responsable: 'operador1'
+        }
+    ];
 
     /** GET /api/transformaciones. OJO: no está en la tabla de endpoints todavía (lo usará el historial). */
     listar(): Observable<Transformacion[]> {

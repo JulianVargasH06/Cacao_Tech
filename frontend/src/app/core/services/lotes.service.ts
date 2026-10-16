@@ -27,6 +27,12 @@ export class LotesService {
             id: 3, codigo: 'L-003', productor: 'Finca Santa Rosa', origen: 'Algeciras, Huila',
             fechaRegistro: '2026-10-13', cantidadInicial: 150, cantidadDisponible: 150, unidad: 'KG',
             tipoLote: 'RECEPCION', estado: 'BLOQUEADO'
+        },
+        {
+            // Resultado de TR-001 (ver TransformacionesService): 80 kg de L-001 fermentados → 72 kg
+            id: 4, codigo: 'L-001-FER', productor: 'Finca La Esperanza', origen: 'Rivera, Huila',
+            fechaRegistro: '2026-10-11', cantidadInicial: 72, cantidadDisponible: 72, unidad: 'KG',
+            tipoLote: 'RESULTADO_TRANSFORMACION', estado: 'PENDIENTE'
         }
     ];
 
