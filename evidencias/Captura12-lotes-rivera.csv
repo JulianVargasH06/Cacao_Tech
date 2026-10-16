@@ -1,0 +1,5 @@
+﻿codigo,productor,origen,fecha_registro,cantidad_inicial_kg,cantidad_disponible_kg,cantidad_consumida_kg,unidad,tipo_lote,estado
+CAC002-FER,Finca El Porvenir,"Rivera, Huila",2026-10-16,9,9,0,KG,RESULTADO_TRANSFORMACION,PENDIENTE
+CAC001-SEC,Finca La Esperanza,"Rivera, Huila",2026-10-16,80,80,0,KG,RESULTADO_TRANSFORMACION,BLOQUEADO
+CAC002,Finca El Porvenir,"Rivera, Huila",2026-10-16,100,90,10,KG,RECEPCION,LIBERADO
+CAC001,Finca La Esperanza,"Rivera, Huila",2026-10-16,100,0,100,KG,RECEPCION,BLOQUEADO
