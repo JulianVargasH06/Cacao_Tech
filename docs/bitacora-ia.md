@@ -129,7 +129,7 @@ Con esto, todos los commits del proyecto (sin contar los de merge de los PR) que
 - **Credenciales**: la contraseña de la base de datos nunca se escribió en archivos ni en commits;
   se usa solo por variables de entorno (`DB_PASSWORD`).
 - **Restricciones respetadas**: en la landing no se modificaron autenticación, interceptores ni guardias, y no se
-  instalaron dependencias nuevas, como pedía el prompt del equipo.
+  instalaron dependencias nuevas.
 
 ## 6. Lecciones
 
