@@ -1,0 +1,10 @@
+import { Routes } from '@angular/router';
+
+/** Páginas del administrador (Frontend 2). El rolGuard('ADMINISTRADOR') está en app.routes.ts. */
+export const ADMIN_ROUTES: Routes = [
+    { path: '', pathMatch: 'full', redirectTo: 'panel' },
+    {
+        path: 'panel',
+        loadComponent: () => import('./panel/panel').then((m) => m.Panel)
+    }
+];
