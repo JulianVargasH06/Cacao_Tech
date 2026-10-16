@@ -7,6 +7,7 @@ import com.cacaotech.backend.dto.TransformacionResponseDto;
 import com.cacaotech.backend.service.CostoService;
 import com.cacaotech.backend.service.TransformacionService;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,13 +28,29 @@ public class TransformacionController {
         this.costoService = costoService;
     }
 
-    /** POST /api/transformaciones — registra una transformación (RF02). El responsable sale del token. */
+    /**
+     * POST /api/transformaciones — registra una transformación (RF02). El responsable sale del token.
+     * Con el encabezado Idempotency-Key, reenviar la misma operación devuelve 200 con la transformación
+     * ya registrada, sin volver a consumir los lotes de entrada.
+     */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'OPERADOR')")
     public ResponseEntity<TransformacionResponseDto> registrar(@Valid @RequestBody TransformacionRequestDto dto,
+                                                               @RequestHeader(value = "Idempotency-Key", required = false) String clave,
                                                                Authentication authentication) {
-        TransformacionResponseDto respuesta = transformacionService.registrar(dto, authentication.getName());
-        return new ResponseEntity<>(respuesta, HttpStatus.CREATED);
+        try {
+            TransformacionService.Resultado resultado =
+                    transformacionService.registrarUnaVez(dto, authentication.getName(), clave);
+            return new ResponseEntity<>(resultado.transformacion(), resultado.reenvio() ? HttpStatus.OK : HttpStatus.CREATED);
+        } catch (DataIntegrityViolationException e) {
+            // Dos envíos simultáneos con la misma clave: el otro ya la registró, se devuelve su resultado
+            if (clave != null && !clave.isBlank()) {
+                return transformacionService.buscarOperacionPrevia(clave)
+                        .map(ResponseEntity::ok)
+                        .orElseThrow(() -> e);
+            }
+            throw e;
+        }
     }
 
     /** POST /api/transformaciones/{id}/costos (HU05 · solo Administrador): agrega un costo y reparte el total. */

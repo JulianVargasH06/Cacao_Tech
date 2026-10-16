@@ -223,11 +223,29 @@ interface FilaMerma {
                     <small [class.negativo]="m.margenPorcentaje < 0">
                       Margen {{ porcentaje(m.margenPorcentaje) }} · {{ cop(m.gananciaPorKgCop) }} por kg
                     </small>
+                    <small class="calculo">
+                      ({{ cop(m.precioVentaKgCop) }} − {{ cop(m.costoUnitarioCop) }}) ÷ {{ cop(m.precioVentaKgCop) }} × 100
+                    </small>
                   }
                 </td>
               </tr>
             }
           </table>
+
+          <div class="formulas">
+            <strong><i class="pi pi-info-circle"></i> Cómo se calcula</strong>
+            <ul>
+              <li>Costo / kg = costo total de la transformación ÷ kg resultantes</li>
+              <li>Margen sobre venta = (precio de venta / kg − costo / kg) ÷ precio de venta / kg × 100</li>
+            </ul>
+            <strong>Supuestos</strong>
+            <ul>
+              <li>Solo cuentan los costos registrados en esta transformación (incluida la materia prima, si se registró como MATERIA_PRIMA).</li>
+              <li>Si hay varios lotes resultantes, el costo se reparte en proporción a sus kg.</li>
+              <li>La merma no tiene costo propio: su efecto es que el costo se divide entre menos kg.</li>
+              <li>Valores en pesos colombianos (COP), sin impuestos.</li>
+            </ul>
+          </div>
         }
       </p-dialog>
     </section>
@@ -313,6 +331,24 @@ interface FilaMerma {
     .negativo {
       color: var(--p-red-500);
     }
+    .calculo {
+      display: block;
+      color: var(--p-text-muted-color);
+    }
+    .formulas {
+      margin-top: 1.25rem;
+      padding: 0.85rem 1rem;
+      border-radius: 1rem;
+      background: var(--p-primary-50);
+      font-size: 0.875rem;
+    }
+    .formulas ul {
+      margin: 0.35rem 0 0.75rem;
+      padding-left: 1.2rem;
+    }
+    .formulas ul:last-child {
+      margin-bottom: 0;
+    }
     .mensaje-accion {
       display: flex;
       align-items: center;
@@ -337,7 +373,7 @@ export class MermasCostos implements OnInit {
     private readonly mensajes = inject(MessageService);
 
     protected readonly umbral = UMBRAL_MERMA;
-    protected readonly categorias = ['MANO_DE_OBRA', 'ENERGIA', 'EMPAQUE', 'TRANSPORTE', 'INSUMOS', 'OTRO'];
+    protected readonly categorias = ['MATERIA_PRIMA', 'MANO_DE_OBRA', 'ENERGIA', 'EMPAQUE', 'TRANSPORTE', 'INSUMOS', 'OTRO'];
     protected readonly filtrosAlerta: { valor: EstadoAlerta; etiqueta: string }[] = [
         { valor: 'ACTIVA', etiqueta: 'Activas' },
         { valor: 'RESUELTA', etiqueta: 'Resueltas' }

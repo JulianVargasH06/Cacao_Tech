@@ -38,7 +38,7 @@ import java.util.function.Supplier;
  * Cuenta una historia coherente usando los mismos servicios de la aplicación, así que pasa por todas
  * sus reglas y deja auditoría, movimientos de inventario, alertas e historial de estados.
  * Las fechas son relativas al día en que se arranca, para que siempre se vean recientes.
- * Si ya existen los datos (CAC-2026-101), no hace nada.
+ * Si ya existen los datos (CAC-2026-101), no hace nada. El lote CAC001 del jurado se revisa por separado.
  */
 @Component
 @Profile("demo")
@@ -72,6 +72,7 @@ public class DatosDemo {
     /** ApplicationReadyEvent: se ejecuta después del DataSeeder, cuando ya existen los usuarios de prueba. */
     @EventListener(ApplicationReadyEvent.class)
     public void cargar() {
+        cargarLoteDelJurado();
         if (loteRepository.findByCodigo("CAC-2026-101").isPresent()) {
             log.info("Datos de demostración ya cargados: no se vuelven a crear");
             return;
@@ -131,6 +132,22 @@ public class DatosDemo {
                 "Control de calidad aprobado: humedad 6 %, sin defectos", ADMIN));
 
         log.info("Datos de demostración listos. Producto para la ficha pública: CAC-2026-101-EMP");
+    }
+
+    /**
+     * Lote CAC001, el que usa el jurado en la prueba "Bloquear CAC001 y consultar su ficha".
+     * Va aparte de la historia principal para que también se cree en una base que ya tenía los demás datos.
+     * Tiene una fermentación para que, al bloquearlo, se vea el impacto en el lote derivado.
+     */
+    private void cargarLoteDelJurado() {
+        if (loteRepository.findByCodigo("CAC001").isPresent()) {
+            return;
+        }
+        Lote cac001 = comoUsuario(OPERADOR, "OPERADOR", () ->
+                recibir("CAC001", "Finca El Mirador", "Palermo, Huila", 10, "300"));
+        transformar("FERMENTACION", 7, 9, List.of(entrada(cac001.getId(), "200")), "CAC001-FER", "185",
+                "Fermentación en cajones durante 5 días");
+        log.info("Lote CAC001 cargado para las pruebas del jurado");
     }
 
     // ─── Ayudas ──────────────────────────────────────────────────────────────────

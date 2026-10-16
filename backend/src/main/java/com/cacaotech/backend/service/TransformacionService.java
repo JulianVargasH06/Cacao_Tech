@@ -5,12 +5,14 @@ import com.cacaotech.backend.dto.TransformacionResponseDto;
 import com.cacaotech.backend.model.EntradaTransformacion;
 import com.cacaotech.backend.model.Lote;
 import com.cacaotech.backend.model.MovimientoInventario;
+import com.cacaotech.backend.model.OperacionProcesada;
 import com.cacaotech.backend.model.SalidaTransformacion;
 import com.cacaotech.backend.model.Transformacion;
 import com.cacaotech.backend.model.Usuario;
 import com.cacaotech.backend.repository.EntradaTransformacionRepository;
 import com.cacaotech.backend.repository.LoteRepository;
 import com.cacaotech.backend.repository.MovimientoInventarioRepository;
+import com.cacaotech.backend.repository.OperacionProcesadaRepository;
 import com.cacaotech.backend.repository.SalidaTransformacionRepository;
 import com.cacaotech.backend.repository.TransformacionRepository;
 import com.cacaotech.backend.repository.UsuarioRepository;
@@ -30,6 +32,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -54,6 +57,7 @@ public class TransformacionService {
     private final AlertaRepository alertaRepository;
     private final CostoRepository costoRepository;
     private final EstadoLoteService estadoLoteService;
+    private final OperacionProcesadaRepository operacionRepository;
     private final MermaCalculadora mermaCalculadora = new MermaCalculadora();
     private final MermaAlertaEvaluador alertaEvaluador = new MermaAlertaEvaluador();
 
@@ -67,7 +71,9 @@ public class TransformacionService {
                                  AlertaService alertaService,
                                  AlertaRepository alertaRepository,
                                  CostoRepository costoRepository,
-                                 EstadoLoteService estadoLoteService) {
+                                 EstadoLoteService estadoLoteService,
+                                 OperacionProcesadaRepository operacionRepository) {
+        this.operacionRepository = operacionRepository;
         this.transformacionRepository = transformacionRepository;
         this.entradaRepository = entradaRepository;
         this.salidaRepository = salidaRepository;
@@ -183,22 +189,66 @@ public class TransformacionService {
     @Transactional(readOnly = true)
     public List<TransformacionResponseDto> listar() {
         return transformacionRepository.findAllByOrderByFechaDescIdDesc().stream()
-                .map(t -> {
-                    List<EntradaTransformacion> entradas = entradaRepository.findByTransformacionId(t.getId());
-                    List<SalidaTransformacion> salidas = salidaRepository.findByTransformacionIdOrderByIdAsc(t.getId());
-                    BigDecimal totalEntradas = entradas.stream()
-                            .map(EntradaTransformacion::getCantidadKg).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    BigDecimal totalSalidas = salidas.stream()
-                            .map(SalidaTransformacion::getCantidadKg).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    ResultadoMerma merma = totalEntradas.signum() > 0
-                            ? mermaCalculadora.calcular(totalEntradas, totalSalidas)
-                            : new ResultadoMerma(BigDecimal.ZERO, BigDecimal.ZERO);
-                    Alerta alerta = alertaRepository
-                            .findFirstByTransformacionIdAndTipo(t.getId(), AlertaService.TIPO_MERMA_ALTA)
-                            .orElse(null);
-                    return aRespuesta(t, entradas, salidas, merma, alerta);
-                })
+                .map(this::aRespuestaGuardada)
                 .toList();
+    }
+
+    /** Resultado de un registro con clave de idempotencia: reenvio = true si la operación ya se había hecho. */
+    public record Resultado(TransformacionResponseDto transformacion, boolean reenvio) {}
+
+    /**
+     * Registra la transformación una sola vez por clave de idempotencia (encabezado Idempotency-Key).
+     * Si el cliente reenvía la misma operación (doble clic, red caída antes de recibir la respuesta),
+     * se devuelve la transformación ya registrada y los lotes de entrada NO se vuelven a consumir.
+     * Sin clave, se comporta como registrar().
+     */
+    @Transactional
+    public Resultado registrarUnaVez(TransformacionRequestDto dto, String correoResponsable, String clave) {
+        if (clave == null || clave.isBlank()) {
+            return new Resultado(registrar(dto, correoResponsable), false);
+        }
+        String claveLimpia = clave.trim();
+        if (claveLimpia.length() > 100) {
+            throw new IllegalArgumentException("La clave de idempotencia no puede superar 100 caracteres");
+        }
+        Optional<TransformacionResponseDto> previa = buscarOperacionPrevia(claveLimpia);
+        if (previa.isPresent()) {
+            return new Resultado(previa.get(), true);
+        }
+
+        TransformacionResponseDto respuesta = registrar(dto, correoResponsable);
+        OperacionProcesada operacion = new OperacionProcesada();
+        operacion.setClaveIdempotencia(claveLimpia);
+        operacion.setTipoOperacion(REFERENCIA);
+        operacion.setResultadoReferencia(String.valueOf(respuesta.id()));
+        operacion.setUsuario(usuarioRepository.findByCorreo(correoResponsable).orElseThrow());
+        // flush: si otra petición con la misma clave ganó la carrera, la restricción única falla aquí
+        operacionRepository.saveAndFlush(operacion);
+        return new Resultado(respuesta, false);
+    }
+
+    /** La transformación que ya se registró con esa clave, si existe. */
+    @Transactional(readOnly = true)
+    public Optional<TransformacionResponseDto> buscarOperacionPrevia(String clave) {
+        return operacionRepository.findByClaveIdempotencia(clave.trim())
+                .flatMap(op -> transformacionRepository.findById(Long.valueOf(op.getResultadoReferencia())))
+                .map(this::aRespuestaGuardada);
+    }
+
+    private TransformacionResponseDto aRespuestaGuardada(Transformacion t) {
+        List<EntradaTransformacion> entradas = entradaRepository.findByTransformacionId(t.getId());
+        List<SalidaTransformacion> salidas = salidaRepository.findByTransformacionIdOrderByIdAsc(t.getId());
+        BigDecimal totalEntradas = entradas.stream()
+                .map(EntradaTransformacion::getCantidadKg).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalSalidas = salidas.stream()
+                .map(SalidaTransformacion::getCantidadKg).reduce(BigDecimal.ZERO, BigDecimal::add);
+        ResultadoMerma merma = totalEntradas.signum() > 0
+                ? mermaCalculadora.calcular(totalEntradas, totalSalidas)
+                : new ResultadoMerma(BigDecimal.ZERO, BigDecimal.ZERO);
+        Alerta alerta = alertaRepository
+                .findFirstByTransformacionIdAndTipo(t.getId(), AlertaService.TIPO_MERMA_ALTA)
+                .orElse(null);
+        return aRespuesta(t, entradas, salidas, merma, alerta);
     }
 
     // ─── Validaciones ────────────────────────────────────────────────────────────

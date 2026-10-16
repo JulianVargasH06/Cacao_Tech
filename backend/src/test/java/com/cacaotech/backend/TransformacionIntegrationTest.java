@@ -187,6 +187,35 @@ class TransformacionIntegrationTest {
 
     // ─── Ayudas ──────────────────────────────────────────────────────────────────
 
+    @Test
+    @DisplayName("9. Reenvío con la misma Idempotency-Key: 200 con la misma transformación y sin doble consumo")
+    void testReenvioSinDobleConsumo() throws Exception {
+        String clave = UUID.randomUUID().toString();
+        TransformacionRequestDto dto = solicitud(loteEntrada.getId(), "100", codigoUnico("TEST-SAL"), "80");
+
+        MvcResult primero = enviarConClave(dto, clave)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mermaPorcentaje").value(20.00))
+                .andReturn();
+        long id = objectMapper.readTree(primero.getResponse().getContentAsString()).get("id").asLong();
+
+        enviarConClave(dto, clave)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id));
+
+        // 150 - 100: solo se descontó una vez
+        assertThat(loteRepository.findById(loteEntrada.getId()).orElseThrow().getCantidadDisponible())
+                .isEqualByComparingTo("50");
+    }
+
+    private ResultActions enviarConClave(TransformacionRequestDto dto, String clave) throws Exception {
+        return mockMvc.perform(post("/api/transformaciones")
+                .header("Authorization", "Bearer " + operadorToken)
+                .header("Idempotency-Key", clave)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)));
+    }
+
     private ResultActions enviar(TransformacionRequestDto dto) throws Exception {
         return mockMvc.perform(post("/api/transformaciones")
                 .header("Authorization", "Bearer " + operadorToken)
