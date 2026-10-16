@@ -16,6 +16,7 @@ import com.cacaotech.backend.repository.TransformacionRepository;
 import com.cacaotech.backend.repository.UsuarioRepository;
 import com.cacaotech.backend.model.Alerta;
 import com.cacaotech.backend.repository.AlertaRepository;
+import com.cacaotech.backend.repository.CostoRepository;
 import com.cacaotech.backend.transformacion.MermaAlertaEvaluador;
 import com.cacaotech.backend.transformacion.MermaCalculadora;
 import com.cacaotech.backend.transformacion.ResultadoMerma;
@@ -51,6 +52,7 @@ public class TransformacionService {
     private final AuditoriaService auditoriaService;
     private final AlertaService alertaService;
     private final AlertaRepository alertaRepository;
+    private final CostoRepository costoRepository;
     private final EstadoLoteService estadoLoteService;
     private final MermaCalculadora mermaCalculadora = new MermaCalculadora();
     private final MermaAlertaEvaluador alertaEvaluador = new MermaAlertaEvaluador();
@@ -64,6 +66,7 @@ public class TransformacionService {
                                  AuditoriaService auditoriaService,
                                  AlertaService alertaService,
                                  AlertaRepository alertaRepository,
+                                 CostoRepository costoRepository,
                                  EstadoLoteService estadoLoteService) {
         this.transformacionRepository = transformacionRepository;
         this.entradaRepository = entradaRepository;
@@ -74,6 +77,7 @@ public class TransformacionService {
         this.auditoriaService = auditoriaService;
         this.alertaService = alertaService;
         this.alertaRepository = alertaRepository;
+        this.costoRepository = costoRepository;
         this.estadoLoteService = estadoLoteService;
     }
 
@@ -181,7 +185,7 @@ public class TransformacionService {
         return transformacionRepository.findAllByOrderByFechaDescIdDesc().stream()
                 .map(t -> {
                     List<EntradaTransformacion> entradas = entradaRepository.findByTransformacionId(t.getId());
-                    List<SalidaTransformacion> salidas = salidaRepository.findByTransformacionId(t.getId());
+                    List<SalidaTransformacion> salidas = salidaRepository.findByTransformacionIdOrderByIdAsc(t.getId());
                     BigDecimal totalEntradas = entradas.stream()
                             .map(EntradaTransformacion::getCantidadKg).reduce(BigDecimal.ZERO, BigDecimal::add);
                     BigDecimal totalSalidas = salidas.stream()
@@ -273,10 +277,12 @@ public class TransformacionService {
                         .toList(),
                 salidas.stream()
                         .map(s -> new TransformacionResponseDto.Salida(
-                                s.getLoteResultante().getId(), s.getLoteResultante().getCodigo(), s.getCantidadKg()))
+                                s.getLoteResultante().getId(), s.getLoteResultante().getCodigo(), s.getCantidadKg(),
+                                s.getCostoAsignadoCop(), CostoService.costoUnitario(s)))
                         .toList(),
                 merma.mermaKg(),
                 merma.mermaPorcentaje(),
+                costoRepository.totalPorTransformacion(t.getId()),
                 alerta == null ? null
                         : new TransformacionResponseDto.AlertaGenerada(alerta.getId(), alerta.getTipo(), alerta.getDescripcion())
         );
