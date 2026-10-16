@@ -29,6 +29,7 @@ public class OperacionProcesada {
     public OperacionProcesada() {}
 
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getClaveIdempotencia() { return claveIdempotencia; }
     public void setClaveIdempotencia(String claveIdempotencia) { this.claveIdempotencia = claveIdempotencia; }
     public String getTipoOperacion() { return tipoOperacion; }

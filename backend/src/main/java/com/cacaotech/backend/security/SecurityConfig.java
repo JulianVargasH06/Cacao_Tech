@@ -18,9 +18,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity // Permite usar @PreAuthorize en los controladores para restringir por rol
 public class SecurityConfig {
 
-    // Comentaremos el filtro temporalmente hasta que lo creemos en el siguiente paso
-    // private final JwtFilter jwtFilter;
-    // public SecurityConfig(JwtFilter jwtFilter) { this.jwtFilter = jwtFilter; }
+    private final JwtFilter jwtFilter;
+
+    public SecurityConfig(JwtFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -29,6 +31,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             // Configuramos la sesión como SIN ESTADO (Stateless)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Manejo de excepciones de autenticación: retornar 401 Unauthorized para peticiones no autenticadas
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) ->
+                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "No autorizado")
+                )
+            )
             // Configuramos las rutas según nuestro documento de Endpoints
             .authorizeHttpRequests(auth -> auth
                 // 1. Rutas Públicas (Swagger y Login)
@@ -40,8 +48,8 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             );
 
-        // Aquí agregaremos el lector de boletas antes del filtro de Spring
-        // http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        // Agregamos el filtro de autenticación JWT antes del filtro estándar de UsernamePassword
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -50,13 +58,6 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public org.springframework.security.core.userdetails.UserDetailsService userDetailsService() {
-        return username -> {
-            throw new org.springframework.security.core.userdetails.UsernameNotFoundException("Usuario no encontrado: " + username);
-        };
     }
 
     // Manejador de Autenticación de Spring

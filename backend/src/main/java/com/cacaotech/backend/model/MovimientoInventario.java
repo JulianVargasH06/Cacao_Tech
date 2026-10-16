@@ -40,6 +40,7 @@ public class MovimientoInventario {
     public MovimientoInventario() {}
 
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public Lote getLote() { return lote; }
     public void setLote(Lote lote) { this.lote = lote; }
     public String getTipo() { return tipo; }

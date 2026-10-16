@@ -24,6 +24,7 @@ public class EntradaTransformacion {
     public EntradaTransformacion() {}
 
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public Transformacion getTransformacion() { return transformacion; }
     public void setTransformacion(Transformacion transformacion) { this.transformacion = transformacion; }
     public Lote getLote() { return lote; }
