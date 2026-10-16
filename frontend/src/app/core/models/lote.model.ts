@@ -1,21 +1,16 @@
+export type Unidad = 'kg' | 'arroba' | 'bulto';
+export const UNIDADES: Unidad[] = ['kg', 'arroba', 'bulto'];
 export interface LoteRequest {
+    codigo: string;
     productor: string;
     origen: string;
-    fecha: string; // formato yyyy-MM-dd
-    cantidad: number;
-    unidad: string;
-    identificador: string;
+    fechaRecepcion: string; // formato yyyy-MM-dd
+    cantidadRecibida: number;
+    unidad: Unidad;
 }
 
-export interface Lote {
+export interface Lote extends LoteRequest {
     id: number;
-    identificador: string;
-    productor: string;
-    origen: string;
-    fecha: string;
-    unidad: string;
-    cantidadRecibida: number;
-    cantidadConsumida: number;
     cantidadDisponible: number;
 }
 
