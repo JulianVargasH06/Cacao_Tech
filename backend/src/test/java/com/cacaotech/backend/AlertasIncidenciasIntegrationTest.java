@@ -272,7 +272,7 @@ class AlertasIncidenciasIntegrationTest {
     private ResultActions transformar(long loteId, String entradaKg, String salidaKg) throws Exception {
         TransformacionRequestDto dto = new TransformacionRequestDto(
                 "SECADO",
-                LocalDateTime.now().minusHours(1).withNano(0),
+                LocalDateTime.now().minusMinutes(1).withNano(0),
                 List.of(new TransformacionRequestDto.Entrada(loteId, new BigDecimal(entradaKg))),
                 List.of(new TransformacionRequestDto.Salida(codigoUnico("ALR-SAL"), new BigDecimal(salidaKg))),
                 null);

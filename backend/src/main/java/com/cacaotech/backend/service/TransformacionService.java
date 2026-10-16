@@ -83,7 +83,7 @@ public class TransformacionService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + correoResponsable));
 
         // ─── 1. Validar todo antes de modificar nada ─────────────────────────────
-        Map<Long, Lote> lotesEntrada = validarEntradas(dto.entradas());
+        Map<Long, Lote> lotesEntrada = validarEntradas(dto.entradas(), dto.fecha());
         validarSalidas(dto.salidas());
 
         BigDecimal totalEntradas = dto.entradas().stream()
@@ -199,8 +199,11 @@ public class TransformacionService {
 
     // ─── Validaciones ────────────────────────────────────────────────────────────
 
-    /** Cada lote debe existir, no estar bloqueado, no repetirse y tener cacao suficiente (HU08). */
-    private Map<Long, Lote> validarEntradas(List<TransformacionRequestDto.Entrada> entradas) {
+    /**
+     * Cada lote debe existir, no estar bloqueado, no repetirse, tener cacao suficiente (HU08)
+     * y haberse registrado antes de la transformación (no se puede procesar cacao que aún no llegaba).
+     */
+    private Map<Long, Lote> validarEntradas(List<TransformacionRequestDto.Entrada> entradas, LocalDateTime fecha) {
         Map<Long, Lote> lotes = new LinkedHashMap<>();
         for (TransformacionRequestDto.Entrada e : entradas) {
             if (lotes.containsKey(e.loteId())) {
@@ -210,6 +213,10 @@ public class TransformacionService {
                     .orElseThrow(() -> new IllegalArgumentException("El lote de entrada " + e.loteId() + " no existe"));
             if (lote.getEstado() == Lote.EstadoLote.BLOQUEADO) {
                 throw new IllegalArgumentException("El lote " + lote.getCodigo() + " está bloqueado y no se puede transformar");
+            }
+            if (fecha.toLocalDate().isBefore(lote.getFechaRegistro())) {
+                throw new IllegalArgumentException("La transformación no puede ser anterior a la recepción del lote "
+                        + lote.getCodigo() + " (" + lote.getFechaRegistro() + ")");
             }
             if (e.cantidadKg().compareTo(lote.getCantidadDisponible()) > 0) {
                 throw new IllegalArgumentException("El lote " + lote.getCodigo() + " solo tiene "
