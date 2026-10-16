@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -11,7 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
     selector: 'app-login',
-    imports: [ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule, MessageModule],
+    imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, PasswordModule, MessageModule],
     template: `
     <main class="pantalla">
       <section class="tarjeta">
@@ -58,6 +58,10 @@ import { AuthService } from '../../core/services/auth.service';
             [fluid]="true"
           />
         </form>
+
+        <a routerLink="/publico/producto" class="enlace-comprador">
+          <i class="pi pi-search"></i> ¿Compraste un producto? Consulta su origen
+        </a>
       </section>
     </main>
   `,
@@ -117,6 +121,18 @@ import { AuthService } from '../../core/services/auth.service';
     }
     p-button {
       margin-top: 1rem;
+    }
+    .enlace-comprador {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--p-primary-700);
+      text-decoration: none;
+    }
+    .enlace-comprador:hover {
+      text-decoration: underline;
     }
     .error-campo {
       color: var(--p-red-500);
