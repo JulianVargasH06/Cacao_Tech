@@ -1,0 +1,142 @@
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { PasswordModule } from 'primeng/password';
+
+import { AuthService } from '../../core/services/auth.service';
+
+@Component({
+    selector: 'app-login',
+    imports: [ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule, MessageModule],
+    template: `
+    <main class="pantalla">
+      <section class="tarjeta">
+        <div class="logo"><i class="pi pi-box"></i></div>
+        <h1>CacaoTech</h1>
+        <p class="subtitulo">Trazabilidad del cacao, del lote al producto</p>
+
+        <form [formGroup]="form" (ngSubmit)="entrar()">
+          <label for="usuario">Usuario</label>
+          <input pInputText id="usuario" formControlName="usuario" autocomplete="username" placeholder="Tu usuario" />
+
+          <label for="contrasena">Contraseña</label>
+          <p-password
+            inputId="contrasena"
+            formControlName="contrasena"
+            [feedback]="false"
+            [toggleMask]="true"
+            [fluid]="true"
+            autocomplete="current-password"
+            placeholder="Tu contraseña"
+          />
+
+          @if (error()) {
+            <p-message severity="error" [text]="error()" />
+          }
+
+          <p-button
+            type="submit"
+            label="Ingresar"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            [loading]="cargando()"
+            [disabled]="form.invalid"
+            [fluid]="true"
+          />
+        </form>
+      </section>
+    </main>
+  `,
+    styles: `
+    .pantalla {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+    /* Mismo cristal que la barra y el menú del MainLayout */
+    .tarjeta {
+      width: min(100%, 24rem);
+      padding: 2.25rem 2rem;
+      border-radius: 1.75rem;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 20px 50px rgba(117, 74, 49, 0.16);
+      text-align: center;
+    }
+    .logo {
+      width: 3.5rem;
+      height: 3.5rem;
+      margin: 0 auto 0.75rem;
+      border-radius: 1.1rem;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--p-primary-500), var(--p-primary-800));
+      color: #fff;
+      font-size: 1.5rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: var(--p-primary-800);
+    }
+    .subtitulo {
+      margin: 0.3rem 0 1.75rem;
+      color: var(--p-text-muted-color);
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+    }
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--p-primary-900);
+      margin-top: 0.4rem;
+    }
+    input {
+      width: 100%;
+    }
+    p-button {
+      margin-top: 1rem;
+    }
+  `
+})
+export class Login {
+    private readonly auth = inject(AuthService);
+    private readonly router = inject(Router);
+
+    protected readonly cargando = signal(false);
+    protected readonly error = signal('');
+
+    protected readonly form = inject(FormBuilder).nonNullable.group({
+        usuario: ['', Validators.required],
+        contrasena: ['', Validators.required]
+    });
+
+    protected entrar(): void {
+        if (this.form.invalid) return;
+        this.cargando.set(true);
+        this.error.set('');
+
+        this.auth.login(this.form.getRawValue()).subscribe({
+            next: (sesion) => {
+                this.router.navigateByUrl(this.auth.rutaInicial(sesion.rol)).catch(() => {
+                    this.error.set('No se pudo abrir tu página de inicio');
+                    this.cargando.set(false);
+                });
+            },
+            error: () => {
+                this.error.set('Usuario o contraseña incorrectos');
+                this.cargando.set(false);
+            }
+        });
+    }
+}
