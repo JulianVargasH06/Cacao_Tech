@@ -14,6 +14,9 @@ import com.cacaotech.backend.repository.MovimientoInventarioRepository;
 import com.cacaotech.backend.repository.SalidaTransformacionRepository;
 import com.cacaotech.backend.repository.TransformacionRepository;
 import com.cacaotech.backend.repository.UsuarioRepository;
+import com.cacaotech.backend.model.Alerta;
+import com.cacaotech.backend.repository.AlertaRepository;
+import com.cacaotech.backend.transformacion.MermaAlertaEvaluador;
 import com.cacaotech.backend.transformacion.MermaCalculadora;
 import com.cacaotech.backend.transformacion.ResultadoMerma;
 import org.springframework.stereotype.Service;
@@ -46,7 +49,11 @@ public class TransformacionService {
     private final LoteRepository loteRepository;
     private final UsuarioRepository usuarioRepository;
     private final AuditoriaService auditoriaService;
+    private final AlertaService alertaService;
+    private final AlertaRepository alertaRepository;
+    private final EstadoLoteService estadoLoteService;
     private final MermaCalculadora mermaCalculadora = new MermaCalculadora();
+    private final MermaAlertaEvaluador alertaEvaluador = new MermaAlertaEvaluador();
 
     public TransformacionService(TransformacionRepository transformacionRepository,
                                  EntradaTransformacionRepository entradaRepository,
@@ -54,7 +61,10 @@ public class TransformacionService {
                                  MovimientoInventarioRepository movimientoRepository,
                                  LoteRepository loteRepository,
                                  UsuarioRepository usuarioRepository,
-                                 AuditoriaService auditoriaService) {
+                                 AuditoriaService auditoriaService,
+                                 AlertaService alertaService,
+                                 AlertaRepository alertaRepository,
+                                 EstadoLoteService estadoLoteService) {
         this.transformacionRepository = transformacionRepository;
         this.entradaRepository = entradaRepository;
         this.salidaRepository = salidaRepository;
@@ -62,6 +72,9 @@ public class TransformacionService {
         this.loteRepository = loteRepository;
         this.usuarioRepository = usuarioRepository;
         this.auditoriaService = auditoriaService;
+        this.alertaService = alertaService;
+        this.alertaRepository = alertaRepository;
+        this.estadoLoteService = estadoLoteService;
     }
 
     @Transactional
@@ -146,7 +159,20 @@ public class TransformacionService {
         auditoriaService.registrar("Transformacion", transformacion.getId(), "CREAR", null,
                 valoresDeTransformacion(transformacion, dto, lotesEntrada, merma));
 
-        return aRespuesta(transformacion, entradas, salidas, merma);
+        // ─── 5. Alerta explicable y bloqueo automático si la merma supera el umbral (HU04) ───
+        Alerta alerta = null;
+        if (alertaEvaluador.superaUmbral(merma.mermaPorcentaje())) {
+            alerta = alertaService.crear(AlertaService.TIPO_MERMA_ALTA, "ALTA",
+                    descripcionMermaAlta(transformacion, totalEntradas, totalSalidas, merma), origen, transformacion);
+            for (SalidaTransformacion salida : salidas) {
+                estadoLoteService.cambiarEstado(salida.getLoteResultante(), Lote.EstadoLote.BLOQUEADO,
+                        "Bloqueo automático por la alerta " + alerta.getId() + ": merma de "
+                                + numero(merma.mermaPorcentaje()) + " % en " + transformacion.getCodigo(),
+                        responsable);
+            }
+        }
+
+        return aRespuesta(transformacion, entradas, salidas, merma, alerta);
     }
 
     /** Todas las transformaciones, de la más reciente a la más antigua (historial del frontend). */
@@ -163,7 +189,10 @@ public class TransformacionService {
                     ResultadoMerma merma = totalEntradas.signum() > 0
                             ? mermaCalculadora.calcular(totalEntradas, totalSalidas)
                             : new ResultadoMerma(BigDecimal.ZERO, BigDecimal.ZERO);
-                    return aRespuesta(t, entradas, salidas, merma);
+                    Alerta alerta = alertaRepository
+                            .findFirstByTransformacionIdAndTipo(t.getId(), AlertaService.TIPO_MERMA_ALTA)
+                            .orElse(null);
+                    return aRespuesta(t, entradas, salidas, merma, alerta);
                 })
                 .toList();
     }
@@ -222,7 +251,8 @@ public class TransformacionService {
     }
 
     private TransformacionResponseDto aRespuesta(Transformacion t, List<EntradaTransformacion> entradas,
-                                                 List<SalidaTransformacion> salidas, ResultadoMerma merma) {
+                                                 List<SalidaTransformacion> salidas, ResultadoMerma merma,
+                                                 Alerta alerta) {
         return new TransformacionResponseDto(
                 t.getId(),
                 t.getCodigo(),
@@ -239,7 +269,9 @@ public class TransformacionService {
                                 s.getLoteResultante().getId(), s.getLoteResultante().getCodigo(), s.getCantidadKg()))
                         .toList(),
                 merma.mermaKg(),
-                merma.mermaPorcentaje()
+                merma.mermaPorcentaje(),
+                alerta == null ? null
+                        : new TransformacionResponseDto.AlertaGenerada(alerta.getId(), alerta.getTipo(), alerta.getDescripcion())
         );
     }
 
@@ -260,6 +292,18 @@ public class TransformacionService {
         valores.put("mermaKg", AuditoriaService.cantidad(merma.mermaKg()));
         valores.put("mermaPorcentaje", merma.mermaPorcentaje());
         return valores;
+    }
+
+    /** Explica la alerta en lenguaje de negocio: qué proceso, cuánto entró y salió, y qué umbral se superó. */
+    private static String descripcionMermaAlta(Transformacion t, BigDecimal entrada, BigDecimal salida, ResultadoMerma merma) {
+        return "Merma de " + numero(merma.mermaPorcentaje()) + " % en " + t.getTipo() + " " + t.getCodigo()
+                + ": entraron " + numero(entrada) + " kg y salieron " + numero(salida) + " kg ("
+                + numero(merma.mermaKg()) + " kg perdidos). Supera el umbral de "
+                + numero(MermaAlertaEvaluador.UMBRAL) + " %, por eso los lotes resultantes quedaron bloqueados para revisión.";
+    }
+
+    private static String numero(BigDecimal valor) {
+        return valor.stripTrailingZeros().toPlainString();
     }
 
     private static String textoOpcional(String texto) {
