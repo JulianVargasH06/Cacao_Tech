@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,10 +9,15 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
+import { MessageService } from 'primeng/api';
+import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
+import { TextareaModule } from 'primeng/textarea';
 import { TimelineModule } from 'primeng/timeline';
+import { ToastModule } from 'primeng/toast';
 
 import { Incidencia } from '../../../core/models/incidencia.model';
-import { Lote } from '../../../core/models/lote.model';
+import { ImpactoLote, Lote, LoteResumen } from '../../../core/models/lote.model';
 import { HistorialEstado } from '../../../core/models/producto.model';
 import { ETAPAS, Transformacion } from '../../../core/models/transformacion.models';
 import { IncidenciasService } from '../../../core/services/incidencias.service';
@@ -36,9 +41,27 @@ interface Paso {
  */
 @Component({
     selector: 'app-trazabilidad',
-    imports: [FormsModule, DatePipe, RouterLink, PageHeader, CardModule, InputTextModule, ButtonModule, MessageModule, TagModule, TimelineModule],
+    imports: [
+        FormsModule,
+        DatePipe,
+        NgTemplateOutlet,
+        RouterLink,
+        PageHeader,
+        CardModule,
+        InputTextModule,
+        ButtonModule,
+        MessageModule,
+        TagModule,
+        TimelineModule,
+        DialogModule,
+        TextareaModule,
+        CheckboxModule,
+        ToastModule
+    ],
+    providers: [MessageService],
     template: `
     <section class="page">
+      <p-toast />
       <app-page-header
         titulo="Trazabilidad"
         descripcion="Recorrido completo de un lote: de dónde viene, qué se produjo con él y qué le ha pasado"
@@ -87,6 +110,77 @@ interface Paso {
             <div><span>Disponible</span><strong>{{ kg(l.cantidadDisponible) }} kg</strong></div>
           </div>
         </p-card>
+
+        <!-- Incidente reportado por un comprador (escenario de la hora 12): bloquear, origen y cantidades -->
+        <p-card>
+          <ng-template #title>
+            <div class="titulo-tarjeta">
+              <span><i class="pi pi-exclamation-triangle"></i> Incidente reportado sobre este lote</span>
+              @if (!impacto()) {
+                <p-button label="Analizar impacto" icon="pi pi-sitemap" severity="danger" [outlined]="true"
+                  [loading]="cargandoImpacto()" (onClick)="analizarImpacto()" />
+              } @else {
+                <p-button label="Bloquear afectados" icon="pi pi-ban" severity="danger" (onClick)="abrirBloqueo()" />
+              }
+            </div>
+          </ng-template>
+
+          @if (impacto(); as im) {
+            <div class="cifras-impacto">
+              <div>
+                <span>Origen</span>
+                <strong>{{ im.origenes.length }} {{ im.origenes.length === 1 ? 'lote de finca' : 'lotes de finca' }}</strong>
+                <small>{{ codigos(im.origenes) }}</small>
+              </div>
+              <div class="afectado">
+                <span>Afectados</span>
+                <strong>{{ kg(im.kgAfectadosDisponibles) }} kg en bodega</strong>
+                <small>{{ im.afectados.length }} lotes: este y todo lo que se produjo con él</small>
+              </div>
+              <div>
+                <span>Mismo origen</span>
+                <strong>{{ kg(im.kgRelacionadosDisponibles) }} kg en bodega</strong>
+                <small>{{ im.relacionados.length }} lotes que podrían compartir el problema</small>
+              </div>
+            </div>
+
+            <div class="tablas-impacto">
+              <div>
+                <h4>Afectados</h4>
+                <ng-container *ngTemplateOutlet="tablaLotes; context: { $implicit: im.afectados }" />
+              </div>
+              <div>
+                <h4>Mismo origen</h4>
+                <ng-container *ngTemplateOutlet="tablaLotes; context: { $implicit: im.relacionados }" />
+              </div>
+            </div>
+            <small class="nota">
+              Transformaciones involucradas: {{ im.transformaciones.join(', ') || '—' }}.
+              Bloquear no borra nada: cada cambio queda en el historial y en la auditoría.
+            </small>
+          } @else {
+            <p class="vacio">
+              Si un comprador reporta un problema con este producto, analiza su impacto: verás de qué finca salió,
+              qué lotes están afectados y cuántos kilos hay que retener.
+            </p>
+          }
+        </p-card>
+
+        <ng-template #tablaLotes let-lotes>
+          <table class="tabla-simple">
+            <tr><th>Lote</th><th class="num">Inicial</th><th class="num">En bodega</th><th>Estado</th></tr>
+            @for (l of lotes; track l.id) {
+              <tr>
+                <td><a [routerLink]="[]" [queryParams]="{ codigo: l.codigo }">{{ l.codigo }}</a></td>
+                <td class="num">{{ kg(l.cantidadInicial) }} kg</td>
+                <td class="num">{{ kg(l.cantidadDisponible) }} kg</td>
+                <td><p-tag [value]="l.estado" [severity]="severidad(l.estado)" [rounded]="true" /></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="vacio">Ninguno</td></tr>
+            }
+          </table>
+        </ng-template>
 
         <div class="columnas">
           <p-card header="De dónde viene">
@@ -175,9 +269,123 @@ interface Paso {
           </div>
         </div>
       }
+
+      <!-- Bloqueo por incidente: motivo obligatorio y opción de incluir lo que comparte el origen -->
+      <p-dialog header="Bloquear por incidente" [(visible)]="dialogoBloqueo" [modal]="true" [style]="{ width: 'min(32rem, 95vw)' }">
+        @if (impacto(); as im) {
+          <div class="bloqueo">
+            <p>
+              Se bloquearán <strong>{{ im.afectados.length }} lotes afectados</strong>
+              ({{ kg(im.kgAfectadosDisponibles) }} kg en bodega). No se borra nada: el historial y la auditoría se conservan.
+            </p>
+            <label for="motivo-incidente">¿Qué reportó el comprador? <span class="error">*</span></label>
+            <textarea pTextarea id="motivo-incidente" [(ngModel)]="motivoIncidente" rows="3" [autoResize]="true"
+              placeholder="Ej: el comprador reporta sabor rancio en la tableta del lote"></textarea>
+            @if (intentoSinMotivo() && !motivoIncidente.trim()) {
+              <small class="error">Escribe el motivo del bloqueo</small>
+            }
+            @if (im.relacionados.length > 0) {
+              <div class="opcion">
+                <p-checkbox inputId="relacionados" [(ngModel)]="incluirRelacionados" [binary]="true" />
+                <label for="relacionados">
+                  Bloquear también los {{ im.relacionados.length }} lotes del mismo origen
+                  ({{ kg(im.kgRelacionadosDisponibles) }} kg más)
+                </label>
+              </div>
+            }
+          </div>
+        }
+        <ng-template #footer>
+          <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="dialogoBloqueo = false" />
+          <p-button label="Bloquear" icon="pi pi-ban" severity="danger" [loading]="bloqueando()" (onClick)="confirmarBloqueo()" />
+        </ng-template>
+      </p-dialog>
     </section>
   `,
     styles: `
+    .titulo-tarjeta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .titulo-tarjeta i {
+      color: var(--p-red-500);
+    }
+    .cifras-impacto {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+      gap: 1rem;
+    }
+    .cifras-impacto div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      background: var(--p-primary-50);
+    }
+    .cifras-impacto .afectado {
+      background: var(--p-red-50);
+    }
+    .cifras-impacto span {
+      font-size: 0.85rem;
+      color: var(--p-text-muted-color);
+    }
+    .tablas-impacto {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+      gap: 1rem;
+      margin: 1rem 0 0.5rem;
+    }
+    h4 {
+      margin: 0 0 0.4rem;
+      color: var(--p-primary-800);
+    }
+    .tabla-simple {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .tabla-simple th,
+    .tabla-simple td {
+      padding: 0.4rem 0.5rem;
+      border-bottom: 1px solid var(--p-content-border-color);
+      text-align: left;
+    }
+    .tabla-simple .num {
+      text-align: right;
+    }
+    .nota {
+      display: block;
+      margin-top: 0.5rem;
+    }
+    .bloqueo p {
+      margin-top: 0;
+    }
+    .bloqueo label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin: 0.75rem 0 0.4rem;
+    }
+    .bloqueo textarea {
+      width: 100%;
+    }
+    .opcion {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .opcion label {
+      margin: 0;
+      font-weight: 400;
+    }
+    .error {
+      color: var(--p-red-500);
+    }
     .buscador {
       display: flex;
       gap: 0.5rem;
@@ -327,6 +535,15 @@ export class Trazabilidad implements OnInit {
     protected readonly severidad = severidadEstado;
     protected readonly porcentaje = (v?: number) => formatoPorcentaje(v);
 
+    private readonly mensajes = inject(MessageService);
+    protected readonly impacto = signal<ImpactoLote | null>(null);
+    protected readonly cargandoImpacto = signal(false);
+    protected readonly bloqueando = signal(false);
+    protected readonly intentoSinMotivo = signal(false);
+    protected dialogoBloqueo = false;
+    protected motivoIncidente = '';
+    protected incluirRelacionados = false;
+
     /** Hacia atrás: transformaciones que llevaron a este lote, hasta los lotes de finca. Orden cronológico. */
     protected readonly recorrido = computed<Paso[]>(() => {
         const inicio = this.lote();
@@ -374,25 +591,90 @@ export class Trazabilidad implements OnInit {
     });
 
     ngOnInit(): void {
+        this.cargarDatos(() =>
+            // ?codigo= en la URL: se puede compartir el enlace de una trazabilidad
+            this.ruta.queryParamMap.subscribe((params) => {
+                const codigo = params.get('codigo');
+                if (codigo) {
+                    this.busqueda = codigo;
+                    this.mostrar(codigo);
+                }
+            })
+        );
+    }
+
+    private cargarDatos(despues: () => void): void {
         forkJoin({ lotes: this.lotesService.listar(), transformaciones: this.transformacionesService.listar() }).subscribe({
             next: ({ lotes, transformaciones }) => {
                 this.lotes.set(lotes);
                 this.transformaciones.set(transformaciones);
                 this.cargando.set(false);
-                // ?codigo= en la URL: se puede compartir el enlace de una trazabilidad
-                this.ruta.queryParamMap.subscribe((params) => {
-                    const codigo = params.get('codigo');
-                    if (codigo) {
-                        this.busqueda = codigo;
-                        this.mostrar(codigo);
-                    }
-                });
+                despues();
             },
             error: (err: HttpErrorResponse) => {
                 this.error.set('No se pudo cargar la información: ' + mensajeDeError(err));
                 this.cargando.set(false);
             }
         });
+    }
+
+    // ─── Incidente reportado por un comprador (escenario de la hora 12) ───────────
+
+    protected analizarImpacto(): void {
+        const lote = this.lote();
+        if (!lote) return;
+        this.cargandoImpacto.set(true);
+        this.lotesService.impacto(lote.id).subscribe({
+            next: (impacto) => {
+                this.impacto.set(impacto);
+                this.cargandoImpacto.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                this.cargandoImpacto.set(false);
+                this.mensajes.add({ severity: 'error', summary: 'No se pudo analizar el impacto', detail: mensajeDeError(err) });
+            }
+        });
+    }
+
+    protected abrirBloqueo(): void {
+        this.motivoIncidente = '';
+        this.incluirRelacionados = false;
+        this.intentoSinMotivo.set(false);
+        this.dialogoBloqueo = true;
+    }
+
+    protected confirmarBloqueo(): void {
+        const lote = this.lote();
+        if (!lote) return;
+        if (!this.motivoIncidente.trim()) {
+            this.intentoSinMotivo.set(true);
+            return;
+        }
+        this.bloqueando.set(true);
+        this.lotesService.bloquearPorIncidente(lote.id, this.motivoIncidente.trim(), this.incluirRelacionados).subscribe({
+            next: (resultado) => {
+                this.bloqueando.set(false);
+                this.dialogoBloqueo = false;
+                this.mensajes.add({
+                    severity: 'success',
+                    summary: `${resultado.bloqueados.length} lotes bloqueados`,
+                    detail: `${formatoKg(resultado.kgRetenidos)} kg retenidos en bodega. Se generó una alerta de retiro.`
+                });
+                // Se recargan los datos para ver los nuevos estados, el historial y el impacto actualizado
+                this.cargarDatos(() => {
+                    this.mostrar(lote.codigo);
+                    this.analizarImpacto();
+                });
+            },
+            error: (err: HttpErrorResponse) => {
+                this.bloqueando.set(false);
+                this.mensajes.add({ severity: 'error', summary: 'No se pudo bloquear', detail: mensajeDeError(err) });
+            }
+        });
+    }
+
+    protected codigos(lotes: LoteResumen[]): string {
+        return lotes.map((l) => l.codigo).join(', ');
     }
 
     protected buscar(): void {
@@ -415,6 +697,7 @@ export class Trazabilidad implements OnInit {
         this.lote.set(lote ?? null);
         this.historial.set([]);
         this.incidencias.set([]);
+        this.impacto.set(null);
         if (!lote) return;
         forkJoin({
             historial: this.lotesService.historialEstados(lote.id),

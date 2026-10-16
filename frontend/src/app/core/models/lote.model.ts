@@ -30,6 +30,37 @@ export interface FiltroLotes {
     hasta?: string; // yyyy-MM-dd
 }
 
+/** Un lote dentro del análisis de impacto. */
+export interface LoteResumen {
+    id: number;
+    codigo: string;
+    tipoLote: TipoLote;
+    estado: EstadoLote;
+    productor?: string;
+    origen?: string;
+    cantidadInicial: number;
+    cantidadDisponible: number;
+}
+
+/** GET /api/lotes/{id}/impacto: incidente o retiro de producto (escenario de la hora 12). */
+export interface ImpactoLote {
+    lote: LoteResumen;
+    origenes: LoteResumen[]; // lotes de finca de donde salió
+    afectados: LoteResumen[]; // el lote reportado + todo lo que se produjo con él
+    relacionados: LoteResumen[]; // lo que comparte su mismo origen (posible riesgo)
+    transformaciones: string[];
+    kgAfectadosDisponibles: number;
+    kgRelacionadosDisponibles: number;
+}
+
+/** Respuesta de POST /api/lotes/{id}/bloqueo-incidente. */
+export interface BloqueoIncidente {
+    bloqueados: string[];
+    yaEstabanBloqueados: string[];
+    kgRetenidos: number;
+    alertaId: number;
+}
+
 /** GET /api/lotes/{id}/margen (HU05): margen sobre venta de un lote resultante. */
 export interface Margen {
     loteId: number;

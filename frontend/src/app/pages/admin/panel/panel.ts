@@ -18,7 +18,7 @@ import { TransformacionesService } from '../../../core/services/transformaciones
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { descargarArchivo, nombreConFecha } from '../../../shared/utils/descargas';
 import { mensajeDeError } from '../../../shared/utils/errores-api';
-import { formatoCop, formatoKg, formatoPorcentaje, severidadEstado } from '../../../shared/utils/formatos';
+import { etiquetaAlerta, formatoCop, formatoKg, formatoPorcentaje, severidadEstado } from '../../../shared/utils/formatos';
 
 interface Indicador {
     etiqueta: string;
@@ -79,7 +79,7 @@ interface Indicador {
           <ul class="alertas">
             @for (a of alertas().slice(0, 5); track a.id) {
               <li>
-                <p-tag [value]="a.tipo === 'MERMA_ALTA' ? 'Merma alta' : 'Incidencia'" severity="danger" [rounded]="true" />
+                <p-tag [value]="etiquetaAlerta(a.tipo)" severity="danger" [rounded]="true" />
                 <div>
                   <p>{{ a.descripcion }}</p>
                   <small>{{ a.codigoLote }} · {{ a.creadaEn | date: 'dd/MM/yyyy HH:mm' }}</small>
@@ -253,6 +253,7 @@ export class Panel implements OnInit {
     protected readonly error = signal('');
 
     protected readonly kg = formatoKg;
+    protected readonly etiquetaAlerta = etiquetaAlerta;
     protected readonly severidad = severidadEstado;
 
     /** Los indicadores se recalculan solos cuando llegan los datos. */
