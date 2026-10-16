@@ -1,16 +1,18 @@
-// OJO: nombres de campos propuestos. Confirmar con el equipo de backend.
+// Tomado de LoginRequestDto y AuthResponseDto del backend (POST /api/auth/login).
 
 export type Rol = 'OPERADOR' | 'ADMINISTRADOR';
 
 export interface LoginRequest {
-    usuario: string;
-    contrasena: string;
+    correo: string;
+    password: string;
 }
 
 export interface LoginResponse {
     token: string;
+    tipo?: string; // "Bearer"
+    correo: string;
     rol: string; // lo que devuelva el backend; se normaliza con normalizarRol()
-    nombre?: string;
+    nombre?: string; // el backend aún no lo envía: mientras tanto se muestra el correo
 }
 
 export interface Sesion {
