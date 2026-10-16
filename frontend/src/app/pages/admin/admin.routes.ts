@@ -18,5 +18,9 @@ export const ADMIN_ROUTES: Routes = [
     {
         path: 'trazabilidad',
         loadComponent: () => import('./trazabilidad/trazabilidad').then((m) => m.Trazabilidad)
+    },
+    {
+        path: 'auditoria',
+        loadComponent: () => import('./auditoria/auditoria').then((m) => m.Auditoria)
     }
 ];
