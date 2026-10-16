@@ -11,6 +11,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { LoteRequest } from '../../../core/models/lote.model';
 import { LotesService } from '../../../core/services/lotes.service';
 import { PageHeader } from '../../../shared/page-header/page-header';
+import { esCodigoDuplicado, mensajeDeError } from '../../../shared/utils/errores-api';
 import { aFechaIso, fechaNoFutura, finDelDia } from '../../../shared/utils/fechas';
 
 @Component({
@@ -196,15 +197,11 @@ export class Recepcion {
             },
             error: (err: HttpErrorResponse) => {
                 this.guardando.set(false);
-                if (err.status === 409) {
+                if (esCodigoDuplicado(err)) {
                     this.form.controls.codigo.setErrors({ duplicado: true });
                     return;
                 }
-                this.mensajes.add({
-                    severity: 'error',
-                    summary: 'No se pudo registrar',
-                    detail: err.error?.mensaje ?? 'Intenta de nuevo en unos segundos'
-                });
+                this.mensajes.add({ severity: 'error', summary: 'No se pudo registrar', detail: mensajeDeError(err) });
             }
         });
     }

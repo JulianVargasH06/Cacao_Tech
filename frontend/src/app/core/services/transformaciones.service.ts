@@ -30,7 +30,7 @@ export class TransformacionesService {
         }
     ];
 
-    /** GET /api/transformaciones. OJO: no está en la tabla de endpoints todavía (lo usará el historial). */
+    /** GET /api/transformaciones (historial) */
     listar(): Observable<Transformacion[]> {
         if (USAR_MOCK_API) return of([...this.simuladas]).pipe(delay(300));
         return this.http.get<Transformacion[]>(this.url);
@@ -52,25 +52,25 @@ export class TransformacionesService {
                 for (const entrada of datos.entradas) {
                     const lote = this.lotes.simuladoPorId(entrada.loteId);
                     if (!lote) {
-                        throw this.error(404, 'El lote de entrada no existe');
+                        throw this.error(`El lote de entrada ${entrada.loteId} no existe`);
                     }
                     if (lote.estado === 'BLOQUEADO') {
-                        throw this.error(422, `El lote ${lote.codigo} está bloqueado y no se puede transformar`);
+                        throw this.error(`El lote ${lote.codigo} está bloqueado y no se puede transformar`);
                     }
                     if (entrada.cantidadKg > lote.cantidadDisponible) {
-                        throw this.error(422, `El lote ${lote.codigo} solo tiene ${lote.cantidadDisponible} kg disponibles`);
+                        throw this.error(`El lote ${lote.codigo} solo tiene ${lote.cantidadDisponible} kg disponibles`);
                     }
                 }
 
                 const totalEntradas = datos.entradas.reduce((suma, e) => suma + e.cantidadKg, 0);
                 const totalSalidas = datos.salidas.reduce((suma, s) => suma + s.cantidadKg, 0);
                 if (totalSalidas > totalEntradas) {
-                    throw this.error(400, 'La salida no puede ser mayor que la entrada');
+                    throw this.error('La salida no puede ser mayor que la entrada');
                 }
 
                 for (const salida of datos.salidas) {
                     if (this.lotes.existeCodigoSimulado(salida.codigo)) {
-                        throw this.error(409, `Ya existe un lote con el código ${salida.codigo}`);
+                        throw this.error(`Ya existe un lote registrado con el código: ${salida.codigo}`);
                     }
                 }
 
@@ -103,7 +103,8 @@ export class TransformacionesService {
         );
     }
 
-    private error(status: number, mensaje: string): HttpErrorResponse {
-        return new HttpErrorResponse({ status, error: { mensaje } });
+    /** Mismo formato que el GlobalExceptionHandler del backend: 400 con { error }. */
+    private error(mensaje: string): HttpErrorResponse {
+        return new HttpErrorResponse({ status: 400, error: { error: mensaje } });
     }
 }
