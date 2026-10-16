@@ -5,5 +5,9 @@ export const OPERADOR_ROUTES: Routes = [
     {
         path: 'recepcion',
         loadComponent: () => import('./recepcion/recepcion').then((m) => m.Recepcion)
+    },
+    {
+        path: 'inventario',
+        loadComponent: () => import('./inventario/inventario').then((m) => m.Inventario)
     }
 ];
