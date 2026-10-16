@@ -14,6 +14,16 @@ export function fechaNoFutura(control: AbstractControl): ValidationErrors | null
     return fecha > finDelDia() ? { fechaFutura: true } : null;
 }
 
+/**
+ * Validador para fecha + hora: no puede ser posterior a este momento
+ * (el backend aplica la misma regla con @PastOrPresent).
+ */
+export function fechaHoraNoFutura(control: AbstractControl): ValidationErrors | null {
+    const fecha = control.value as Date | null;
+    if (!fecha) return null;
+    return fecha.getTime() > Date.now() ? { fechaFutura: true } : null;
+}
+
 /** Convierte un Date a 'yyyy-MM-dd' usando la hora local (no UTC). */
 export function aFechaIso(fecha: Date): string {
     const anio = fecha.getFullYear();

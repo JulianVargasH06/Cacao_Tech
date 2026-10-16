@@ -47,10 +47,10 @@ export class LotesService {
         return this.http.get<Lote>(`${this.url}/${id}`);
     }
 
-    /** POST /api/lotes (HU01 · Operador) */
+    /** POST /api/lotes/recepcion (HU01 · Operador) */
     registrar(datos: LoteRequest): Observable<Lote> {
         if (USAR_MOCK_API) return this.registrarSimulado(datos);
-        return this.http.post<Lote>(this.url, datos);
+        return this.http.post<Lote>(`${this.url}/recepcion`, datos);
     }
 
     /** GET /api/lotes/{id}/trazabilidad (HU03 · Administrador) */
@@ -63,14 +63,14 @@ export class LotesService {
         return this.http.get(`${this.url}/exportar`, { responseType: 'blob' });
     }
 
-    /** Imita al backend: rechaza códigos repetidos (409) y deja todo lo recibido como disponible. */
+    /** Imita al backend: rechaza códigos repetidos (400, igual que LoteService) y deja todo lo recibido como disponible. */
     private registrarSimulado(datos: LoteRequest): Observable<Lote> {
         return timer(400).pipe(
             map(() => {
                 if (this.existeCodigoSimulado(datos.codigo)) {
                     throw new HttpErrorResponse({
-                        status: 409,
-                        error: { mensaje: `Ya existe un lote con el código ${datos.codigo}` }
+                        status: 400,
+                        error: { error: `Ya existe un lote registrado con el código: ${datos.codigo}` }
                     });
                 }
                 return this.crearSimulado(datos);

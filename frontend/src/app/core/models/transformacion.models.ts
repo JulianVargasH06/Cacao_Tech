@@ -1,5 +1,4 @@
-// OJO: forma tomada de las entidades Transformacion, EntradaTransformacion y SalidaTransformacion
-// del backend (PR #7). Confirmar cuando exista el JSON real de POST /api/transformaciones.
+// Sigue TransformacionRequestDto y TransformacionResponseDto del backend (POST y GET /api/transformaciones).
 
 export type Etapa = 'FERMENTACION' | 'SECADO' | 'TOSTADO' | 'MOLIENDA' | 'EMPAQUE';
 
@@ -15,12 +14,14 @@ export const ETAPAS: { valor: Etapa; etiqueta: string }[] = [
 export interface EntradaTransformacion {
     loteId: number;
     cantidadKg: number;
+    codigoLote?: string; // solo en la respuesta
 }
 
 /** Lo que sale del proceso: crea un lote nuevo con este código. */
 export interface SalidaTransformacion {
     codigo: string;
     cantidadKg: number;
+    loteId?: number; // solo en la respuesta: el lote nuevo que se creó
 }
 
 /** Lo que enviamos al registrar una transformación (HU02). El responsable sale del token. */
@@ -32,9 +33,11 @@ export interface TransformacionRequest {
     observaciones?: string;
 }
 
-/** Lo que devuelve el backend: lo enviado + id, código generado y responsable. */
+/** Lo que devuelve el backend: lo enviado + id, código generado, responsable y merma. */
 export interface Transformacion extends TransformacionRequest {
     id: number;
-    codigo: string;
-    responsable: string;
+    codigo: string; // ej. "TR-00001"
+    responsable: string; // nombre del usuario que la registró
+    mermaKg?: number;
+    mermaPorcentaje?: number;
 }

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, map } from 'rxjs';
 
 import { API_URL } from '../config/api.config';
-import { USAR_MOCK_API } from '../config/dev.config';
+import { USAR_MOCK_AUDITORIA } from '../config/dev.config';
 import { RegistroAuditoria } from '../models/auditoria.model';
 import { LotesService } from './lotes.service';
 import { TransformacionesService } from './transformaciones.service';
@@ -17,13 +17,13 @@ export class AuditoriaService {
 
     /** GET /api/auditoria (HU10 · Administrador). OJO: no está en la tabla de endpoints todavía. */
     listar(): Observable<RegistroAuditoria[]> {
-        if (USAR_MOCK_API) return this.listarSimulado();
+        if (USAR_MOCK_AUDITORIA) return this.listarSimulado();
         return this.http.get<RegistroAuditoria[]>(this.url);
     }
 
     /**
-     * Imita al backend armando la auditoría a partir de los lotes y transformaciones simulados,
-     * más un cambio de estado de ejemplo (el bloqueo de L-003).
+     * Mientras no exista GET /api/auditoria, arma la auditoría a partir de los lotes y transformaciones
+     * (reales o simulados, según USAR_MOCK_API), más el cambio de estado de cada lote bloqueado.
      */
     private listarSimulado(): Observable<RegistroAuditoria[]> {
         return forkJoin([this.lotes.listar(), this.transformaciones.listar()]).pipe(
@@ -34,7 +34,7 @@ export class AuditoriaService {
                         const origen = transformaciones.find((t) => t.salidas.some((s) => s.codigo === l.codigo));
                         return {
                             id: 0,
-                            usuario: origen?.responsable ?? 'operador1',
+                            usuario: origen?.responsable ?? 'operador',
                             entidad: 'Lote',
                             entidadId: l.id,
                             accion: 'CREAR',
@@ -51,16 +51,19 @@ export class AuditoriaService {
                         valoresNuevos: `codigo=${t.codigo}, tipo=${t.tipo}`,
                         fecha: t.fecha
                     })),
-                    {
-                        id: 0,
-                        usuario: 'admin',
-                        entidad: 'Lote',
-                        entidadId: 3,
-                        accion: 'CAMBIAR_ESTADO',
-                        valoresAnteriores: 'estado=PENDIENTE',
-                        valoresNuevos: 'estado=BLOQUEADO (humedad fuera de rango)',
-                        fecha: '2026-10-14T09:30:00'
-                    }
+                    // Cada lote bloqueado tuvo que pasar por un cambio de estado
+                    ...lotes
+                        .filter((l) => l.estado === 'BLOQUEADO')
+                        .map((l) => ({
+                            id: 0,
+                            usuario: 'admin',
+                            entidad: 'Lote',
+                            entidadId: l.id,
+                            accion: 'CAMBIAR_ESTADO',
+                            valoresAnteriores: 'estado=PENDIENTE',
+                            valoresNuevos: 'estado=BLOQUEADO',
+                            fecha: `${l.fechaRegistro}T09:30:00`
+                        }))
                 ];
                 return registros
                     .sort((a, b) => b.fecha.localeCompare(a.fecha))

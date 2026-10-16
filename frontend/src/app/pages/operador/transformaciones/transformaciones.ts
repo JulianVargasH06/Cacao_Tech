@@ -22,7 +22,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { LotesService } from '../../../core/services/lotes.service';
 import { TransformacionesService } from '../../../core/services/transformaciones.service';
 import { PageHeader } from '../../../shared/page-header/page-header';
-import { aFechaHoraIso, fechaNoFutura, finDelDia } from '../../../shared/utils/fechas';
+import { esCodigoDuplicado, mensajeDeError } from '../../../shared/utils/errores-api';
+import { aFechaHoraIso, fechaHoraNoFutura, finDelDia } from '../../../shared/utils/fechas';
 
 /**
  * Registro de transformaciones (HU02): se toma cacao de un lote, pasa por una etapa
@@ -132,7 +133,7 @@ import { aFechaHoraIso, fechaNoFutura, finDelDia } from '../../../shared/utils/f
               <small class="error">La fecha es obligatoria</small>
             }
             @if (tieneError('fecha', 'fechaFutura')) {
-              <small class="error">La fecha no puede ser futura</small>
+              <small class="error">La fecha y hora no pueden ser posteriores a este momento</small>
             }
           </div>
 
@@ -345,7 +346,7 @@ export class Transformaciones implements OnInit {
         {
             loteId: [null as number | null, Validators.required],
             tipo: [null as Etapa | null, Validators.required],
-            fecha: [new Date() as Date | null, [Validators.required, fechaNoFutura]],
+            fecha: [new Date() as Date | null, [Validators.required, fechaHoraNoFutura]],
             entrada: [null as number | null, [Validators.required, Validators.min(0.01)]],
             salida: [null as number | null, [Validators.required, Validators.min(0.01)]],
             codigoSalida: ['', [Validators.required, Validators.maxLength(30)]],
@@ -440,15 +441,13 @@ export class Transformaciones implements OnInit {
             },
             error: (err: HttpErrorResponse) => {
                 this.guardando.set(false);
-                if (err.status === 409) {
+                if (esCodigoDuplicado(err)) {
                     this.form.controls.codigoSalida.setErrors({ duplicado: true });
                     return;
                 }
-                this.mensajes.add({
-                    severity: 'error',
-                    summary: 'No se pudo registrar',
-                    detail: err.error?.mensaje ?? 'Intenta de nuevo en unos segundos'
-                });
+                this.mensajes.add({ severity: 'error', summary: 'No se pudo registrar', detail: mensajeDeError(err) });
+                // Si el backend rechazó por cantidades, el disponible pudo cambiar: recargar los lotes
+                this.cargarLotes();
             }
         });
     }
