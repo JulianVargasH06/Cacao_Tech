@@ -21,11 +21,14 @@ export function cambiosDeAuditoria(registro: RegistroAuditoria): CambioCampo[] {
     }
 
     const campos = [...new Set([...Object.keys(antes ?? {}), ...Object.keys(despues ?? {})])];
-    return campos.map((campo) => ({
-        campo,
-        antes: antes && campo in antes ? legible(antes[campo]) : undefined,
-        despues: despues && campo in despues ? legible(despues[campo]) : undefined
-    }));
+    return campos
+        .map((campo) => ({
+            campo,
+            antes: antes && campo in antes ? legible(antes[campo]) : undefined,
+            despues: despues && campo in despues ? legible(despues[campo]) : undefined
+        }))
+        // En una actualización solo interesa lo que cambió: "nombre: Ana → Ana" es ruido
+        .filter((c) => c.antes === undefined || c.antes !== c.despues);
 }
 
 function leerJson(texto?: string | null): Record<string, unknown> | null {
