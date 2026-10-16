@@ -27,6 +27,7 @@ public class ParametroSistema {
     public ParametroSistema() {}
 
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getClave() { return clave; }
     public void setClave(String clave) { this.clave = clave; }
     public String getValor() { return valor; }
