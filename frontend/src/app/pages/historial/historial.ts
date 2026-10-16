@@ -18,9 +18,13 @@ import { AuthService } from '../../core/services/auth.service';
 import { LotesService } from '../../core/services/lotes.service';
 import { TransformacionesService } from '../../core/services/transformaciones.service';
 import { PageHeader } from '../../shared/page-header/page-header';
+import { CambioCampo, cambiosDeAuditoria } from '../../shared/utils/auditoria-cambios';
 
 type TipoOperacion = 'RECEPCION' | 'TRANSFORMACION';
 type Filtro = 'TODAS' | TipoOperacion;
+
+/** Registro de auditoría con sus cambios ya convertidos a texto legible. */
+type FilaAuditoria = RegistroAuditoria & { cambios: CambioCampo[] };
 
 /** Una fila del historial: une recepciones y transformaciones en un mismo formato. */
 interface Operacion {
@@ -173,10 +177,19 @@ interface Operacion {
                 <td><p-tag [value]="r.accion" [severity]="severidadAccion(r.accion)" [rounded]="true" /></td>
                 <td>{{ r.entidad }} #{{ r.entidadId }}</td>
                 <td>
-                  @if (r.valoresAnteriores) {
-                    <span class="anterior">{{ r.valoresAnteriores }}</span> →
-                  }
-                  {{ r.valoresNuevos }}
+                  <ul class="cambios">
+                    @for (c of r.cambios; track $index) {
+                      <li>
+                        @if (c.campo) {
+                          <span class="campo">{{ c.campo }}:</span>
+                        }
+                        @if (c.antes !== undefined) {
+                          <span class="anterior">{{ c.antes }}</span> →
+                        }
+                        {{ c.despues ?? '—' }}
+                      </li>
+                    }
+                  </ul>
                 </td>
               </tr>
             </ng-template>
@@ -221,6 +234,18 @@ interface Operacion {
       color: var(--p-text-muted-color);
       text-decoration: line-through;
     }
+    .cambios {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      font-size: 0.875rem;
+    }
+    .campo {
+      color: var(--p-text-muted-color);
+    }
     .vacio {
       text-align: center;
       padding: 2rem;
@@ -253,7 +278,7 @@ export class Historial implements OnInit {
     ];
 
     protected readonly operaciones = signal<Operacion[]>([]);
-    protected readonly auditoria = signal<RegistroAuditoria[]>([]);
+    protected readonly auditoria = signal<FilaAuditoria[]>([]);
     protected readonly cargando = signal(true);
     protected readonly error = signal('');
     protected readonly filtro = signal<Filtro>('TODAS');
@@ -288,7 +313,7 @@ export class Historial implements OnInit {
         }).subscribe({
             next: ({ lotes, transformaciones, auditoria }) => {
                 this.operaciones.set(this.armarOperaciones(lotes, transformaciones));
-                this.auditoria.set(auditoria);
+                this.auditoria.set(auditoria.map((r) => ({ ...r, cambios: cambiosDeAuditoria(r) })));
                 this.cargando.set(false);
             },
             error: () => {
@@ -298,8 +323,9 @@ export class Historial implements OnInit {
         });
     }
 
-    protected severidadAccion(accion: string): 'success' | 'warn' | 'secondary' {
+    protected severidadAccion(accion: string): 'success' | 'info' | 'warn' | 'secondary' {
         if (accion === 'CREAR') return 'success';
+        if (accion === 'CONSUMO') return 'info';
         if (accion === 'CAMBIAR_ESTADO') return 'warn';
         return 'secondary';
     }

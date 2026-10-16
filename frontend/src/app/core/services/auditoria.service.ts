@@ -15,7 +15,7 @@ export class AuditoriaService {
     private readonly transformaciones = inject(TransformacionesService);
     private readonly url = `${API_URL}/auditoria`;
 
-    /** GET /api/auditoria (HU10 · Administrador). OJO: no está en la tabla de endpoints todavía. */
+    /** GET /api/auditoria (HU10 · solo Administrador) */
     listar(): Observable<RegistroAuditoria[]> {
         if (USAR_MOCK_AUDITORIA) return this.listarSimulado();
         return this.http.get<RegistroAuditoria[]>(this.url);
@@ -38,7 +38,7 @@ export class AuditoriaService {
                             entidad: 'Lote',
                             entidadId: l.id,
                             accion: 'CREAR',
-                            valoresNuevos: `codigo=${l.codigo}, cantidadInicial=${l.cantidadInicial} kg`,
+                            valoresNuevos: JSON.stringify({ codigo: l.codigo, cantidadInicial: l.cantidadInicial, tipoLote: l.tipoLote }),
                             fecha: origen?.fecha ?? `${l.fechaRegistro}T07:00:00`
                         };
                     }),
@@ -48,7 +48,7 @@ export class AuditoriaService {
                         entidad: 'Transformacion',
                         entidadId: t.id,
                         accion: 'CREAR',
-                        valoresNuevos: `codigo=${t.codigo}, tipo=${t.tipo}`,
+                        valoresNuevos: JSON.stringify({ codigo: t.codigo, tipo: t.tipo }),
                         fecha: t.fecha
                     })),
                     // Cada lote bloqueado tuvo que pasar por un cambio de estado
@@ -60,8 +60,8 @@ export class AuditoriaService {
                             entidad: 'Lote',
                             entidadId: l.id,
                             accion: 'CAMBIAR_ESTADO',
-                            valoresAnteriores: 'estado=PENDIENTE',
-                            valoresNuevos: 'estado=BLOQUEADO',
+                            valoresAnteriores: JSON.stringify({ estado: 'PENDIENTE' }),
+                            valoresNuevos: JSON.stringify({ estado: 'BLOQUEADO' }),
                             fecha: `${l.fechaRegistro}T09:30:00`
                         }))
                 ];
