@@ -1,13 +1,17 @@
 package com.cacaotech.backend.controller;
 
+import com.cacaotech.backend.dto.BloqueoIncidenteRequestDto;
+import com.cacaotech.backend.dto.BloqueoIncidenteResponseDto;
 import com.cacaotech.backend.dto.CambioEstadoRequestDto;
 import com.cacaotech.backend.dto.FiltroLotes;
 import com.cacaotech.backend.dto.HistorialEstadoResponseDto;
+import com.cacaotech.backend.dto.ImpactoLoteDto;
 import com.cacaotech.backend.dto.LoteRequestDto;
 import com.cacaotech.backend.dto.MargenDto;
 import com.cacaotech.backend.model.Lote;
 import com.cacaotech.backend.service.CostoService;
 import com.cacaotech.backend.service.EstadoLoteService;
+import com.cacaotech.backend.service.ImpactoLoteService;
 import com.cacaotech.backend.service.LoteService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,11 +35,14 @@ public class LoteController {
     private final LoteService loteService;
     private final EstadoLoteService estadoLoteService;
     private final CostoService costoService;
+    private final ImpactoLoteService impactoLoteService;
 
-    public LoteController(LoteService loteService, EstadoLoteService estadoLoteService, CostoService costoService) {
+    public LoteController(LoteService loteService, EstadoLoteService estadoLoteService, CostoService costoService,
+                          ImpactoLoteService impactoLoteService) {
         this.loteService = loteService;
         this.estadoLoteService = estadoLoteService;
         this.costoService = costoService;
+        this.impactoLoteService = impactoLoteService;
     }
 
     /** GET /api/lotes — inventario (HU08) y base del historial. */
@@ -82,6 +89,22 @@ public class LoteController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MargenDto> margen(@PathVariable Long id, @RequestParam BigDecimal precioVentaKg) {
         return ResponseEntity.ok(costoService.margen(id, precioVentaKg));
+    }
+
+    /** GET /api/lotes/{id}/impacto (solo Administrador): origen, afectados y relacionados, con cantidades. */
+    @GetMapping("/{id}/impacto")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<ImpactoLoteDto> impacto(@PathVariable Long id) {
+        return ResponseEntity.ok(impactoLoteService.impacto(id));
+    }
+
+    /** POST /api/lotes/{id}/bloqueo-incidente (solo Administrador): bloquea el lote reportado y sus derivados. */
+    @PostMapping("/{id}/bloqueo-incidente")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<BloqueoIncidenteResponseDto> bloquearPorIncidente(@PathVariable Long id,
+                                                                            @Valid @RequestBody BloqueoIncidenteRequestDto dto,
+                                                                            Authentication authentication) {
+        return ResponseEntity.ok(impactoLoteService.bloquearPorIncidente(id, dto, authentication.getName()));
     }
 
     /** GET /api/lotes/{id}/historial-estados: cada cambio de estado con su motivo, del más reciente al más antiguo. */

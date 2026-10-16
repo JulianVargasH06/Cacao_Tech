@@ -24,7 +24,7 @@ import { LotesService } from '../../../core/services/lotes.service';
 import { TransformacionesService } from '../../../core/services/transformaciones.service';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { mensajeDeError } from '../../../shared/utils/errores-api';
-import { formatoCop, formatoKg, formatoPorcentaje } from '../../../shared/utils/formatos';
+import { etiquetaAlerta, formatoCop, formatoKg, formatoPorcentaje } from '../../../shared/utils/formatos';
 
 /** Mismo umbral que MermaAlertaEvaluador del backend: una merma mayor genera alerta y bloqueo. */
 const UMBRAL_MERMA = 15;
@@ -109,7 +109,7 @@ interface FilaMerma {
           @for (a of alertasVisibles(); track a.id) {
             <li>
               <p-tag
-                [value]="a.tipo === 'MERMA_ALTA' ? 'Merma alta' : 'Incidencia'"
+                [value]="etiquetaAlerta(a.tipo)"
                 [severity]="a.estado === 'ACTIVA' ? 'danger' : 'secondary'"
                 [rounded]="true"
               />
@@ -359,6 +359,7 @@ export class MermasCostos implements OnInit {
     protected readonly margenes = signal<Record<number, Margen>>({});
 
     protected readonly kg = formatoKg;
+    protected readonly etiquetaAlerta = etiquetaAlerta;
     protected readonly cop = formatoCop;
     protected readonly porcentaje = (v: number) => formatoPorcentaje(v);
 

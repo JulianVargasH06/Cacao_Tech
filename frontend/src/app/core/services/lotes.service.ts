@@ -4,7 +4,7 @@ import { Observable, delay, map, of, timer } from 'rxjs';
 
 import { API_URL } from '../config/api.config';
 import { USAR_MOCK_API } from '../config/dev.config';
-import { FiltroLotes, Lote, LoteRequest, Margen, TipoLote } from '../models/lote.model';
+import { BloqueoIncidente, FiltroLotes, ImpactoLote, Lote, LoteRequest, Margen, TipoLote } from '../models/lote.model';
 import { CambioEstadoRequest, HistorialEstado } from '../models/producto.model';
 import { paramsDe } from '../../shared/utils/http-params';
 
@@ -63,6 +63,16 @@ export class LotesService {
     /** GET /api/lotes/{id}/historial-estados */
     historialEstados(id: number): Observable<HistorialEstado[]> {
         return this.http.get<HistorialEstado[]>(`${this.url}/${id}/historial-estados`);
+    }
+
+    /** GET /api/lotes/{id}/impacto (Administrador): origen, afectados y relacionados, con cantidades. */
+    impacto(id: number): Observable<ImpactoLote> {
+        return this.http.get<ImpactoLote>(`${this.url}/${id}/impacto`);
+    }
+
+    /** POST /api/lotes/{id}/bloqueo-incidente (Administrador): bloquea el lote reportado y sus derivados. */
+    bloquearPorIncidente(id: number, motivo: string, incluirRelacionados: boolean): Observable<BloqueoIncidente> {
+        return this.http.post<BloqueoIncidente>(`${this.url}/${id}/bloqueo-incidente`, { motivo, incluirRelacionados });
     }
 
     /** GET /api/lotes/{id}/margen?precioVentaKg= (HU05 · Administrador) */

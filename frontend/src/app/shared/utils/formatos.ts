@@ -16,6 +16,12 @@ export function formatoPorcentaje(valor: number | null | undefined, decimales = 
     return valor.toLocaleString('es-CO', { minimumFractionDigits: decimales, maximumFractionDigits: decimales }) + ' %';
 }
 
+/** Nombre para mostrar de un tipo de alerta del backend. */
+export function etiquetaAlerta(tipo: string): string {
+    const nombres: Record<string, string> = { MERMA_ALTA: 'Merma alta', INCIDENCIA: 'Incidencia', RETIRO: 'Retiro' };
+    return nombres[tipo] ?? tipo;
+}
+
 /** Severidad del tag de PrimeNG según el estado de un lote. */
 export function severidadEstado(estado: string): 'success' | 'warn' | 'danger' | 'secondary' {
     if (estado === 'LIBERADO') return 'success';
