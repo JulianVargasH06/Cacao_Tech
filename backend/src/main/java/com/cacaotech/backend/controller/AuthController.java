@@ -39,7 +39,7 @@ public class AuthController {
         String rolNombre = (usuario.getRol() != null) ? usuario.getRol().getNombre() : "OPERADOR";
         String token = jwtUtil.generateToken(usuario.getCorreo(), rolNombre);
 
-        AuthResponseDto response = new AuthResponseDto(token, usuario.getCorreo(), rolNombre);
+        AuthResponseDto response = new AuthResponseDto(token, usuario.getCorreo(), usuario.getNombre(), rolNombre);
         return ResponseEntity.ok(response);
     }
 }
